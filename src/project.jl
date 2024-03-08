@@ -31,13 +31,24 @@ function meta_eval(input)
     end
 end
 
-println("--- FIRST TESTS ---")
-@assert(meta_eval(:1) == 1)
-@assert(meta_eval(:"Hello, world!") == "Hello, world!")
-@assert(meta_eval(:(1 + 2)) == 3)
-@assert(meta_eval(:((1 + 2) + (1 + 2))) == 6)
-@assert(meta_eval(:((2 + 3) * (4 + 5))) == 45)
-@assert(meta_eval(:(3 > 2)) == true)
-@assert(meta_eval(:(3 < 2)) == false)
-@assert(meta_eval(:(3 > 2 && 3 < 2)) == false)
-@assert(meta_eval(:(3 > 2 || 3 < 2)) == true)
+function test_project()
+    println("--- START TESTS ---")
+    test_basic_operators()
+    println("--- TESTS PERFORMED ---")
+end
+
+function test_basic_operators()
+    println("*** TEST BASIC OPERATORS ***")
+    @assert(meta_eval(:1) == 1)
+    @assert(meta_eval(:"Hello, world!") == "Hello, world!")
+    @assert(meta_eval(:(1 + 2)) == 3)
+    @assert(meta_eval(:((1 + 2) + (1 + 2))) == 6)
+    @assert(meta_eval(:((2 + 3) * (4 + 5))) == 45)
+    @assert(meta_eval(:(3 > 2)) == true)
+    @assert(meta_eval(:(3 < 2)) == false)
+    @assert(meta_eval(:(3 > 2 && 3 < 2)) == false)
+    @assert(meta_eval(:(3 > 2 || 3 < 2)) == true)
+    println("*** BASIC OPERATORS TESTED ***")
+end
+
+test_project()
