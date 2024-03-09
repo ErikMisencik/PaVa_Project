@@ -1,4 +1,4 @@
-debug = false
+debug = true
 
 # function metajulia_repl()
 #     while true
@@ -20,49 +20,81 @@ function meta_eval_string(input_string)
     meta_eval(expr)
 end
 
-function meta_eval(exp)
+function meta_eval(exp, scope=Dict())
     if(debug)
         println(typeof(exp))
         println(exp)
+        println("Current scope: ", scope)
     end
     if typeof(exp) == Expr
         if exp.head == :call
             if exp.args[1] == :+
-                return meta_eval(exp.args[2]) + meta_eval(exp.args[3])
-            elseif exp.args[1] == :*
-                return meta_eval(exp.args[2]) * meta_eval(exp.args[3])
+                return meta_eval(exp.args[2], scope) + meta_eval(exp.args[3], scope)
+            elseif exp.args[1] == :*  
+                return meta_eval(exp.args[2], scope) * meta_eval(exp.args[3], scope)
             elseif exp.args[1] == :<
-                return meta_eval(exp.args[2]) < meta_eval(exp.args[3])
+                return meta_eval(exp.args[2], scope) < meta_eval(exp.args[3], scope)
             elseif exp.args[1] == :>
-                return meta_eval(exp.args[2]) > meta_eval(exp.args[3])
+                return meta_eval(exp.args[2], scope) > meta_eval(exp.args[3], scope)
             end
         elseif exp.head == :&&
-            return meta_eval(exp.args[1]) && meta_eval(exp.args[2])
+            return meta_eval(exp.args[1], scope) && meta_eval(exp.args[2], scope)
         elseif exp.head == :||
-            return meta_eval(exp.args[1]) || meta_eval(exp.args[2])
+            return meta_eval(exp.args[1], scope) || meta_eval(exp.args[2], scope)
         elseif exp.head == :if
-            eval_if(exp.args)
+            eval_if(exp.args, scope)
         elseif exp.head == :block
-            eval_block(exp.args)
+            eval_block(exp.args, scope)
+        elseif exp.head == :let
+            return eval_let(exp.args, scope)
+        elseif exp.head == :(=)  # Handling assignment
+            var_name = exp.args[1]
+            var_value = meta_eval(exp.args[2], scope)
+            scope[var_name] = var_value
+            return var_value
+        end
+    elseif typeof(exp) == Symbol  # Handling variables
+        if haskey(scope, exp)
+            return scope[exp]
+        else
+            error("Undefined variable: ", exp)
         end
     else
         return exp
     end
 end
 
-function eval_if(if_exp_args)
-    # if_exp_args[1] is the part of the if exp that decides if args[2] or [3] should be returned
-    if !meta_eval(if_exp_args[1])
-       return meta_eval(if_exp_args[3])
+function eval_let(let_exp_args, outer_scope)
+    local_scope = deepcopy(outer_scope)  # Inherit outer scope
+    result = nothing
+    for exp in let_exp_args
+        if exp.head == :(=)
+            var_name = exp.args[1]
+            var_value = meta_eval(exp.args[2], local_scope)
+            local_scope[var_name] = var_value  # Update local_scope
+            # In eval_let, after updating local_scope
+            #println("Updated local_scope: ", local_scope)
+        else
+            result = meta_eval(exp, local_scope)  # Use updated local_scope
+        end
     end
-    return meta_eval(if_exp_args[2])
+    #println("*** Final result of 'let' block: ", result)
+    return result
 end
 
-function eval_block(block_exp)
+function eval_if(if_exp_args, scope)
+    # if_exp_args[1] is the part of the if exp that decides if args[2] or [3] should be returned
+    if !meta_eval(if_exp_args[1], scope)
+       return meta_eval(if_exp_args[3], scope)
+    end
+    return meta_eval(if_exp_args[2], scope)
+end
+
+function eval_block(block_exp, scope)
     # Evaluate each expression in the block
     result = nothing
     for exp in block_exp
-        result = meta_eval(exp)
+        result = meta_eval(exp, scope)
     end
     # Return the result of the last expression
     return result
@@ -70,9 +102,10 @@ end
 
 function test_project()
     println("--- START TESTS ---")
-    test_basic_math_operators()
-    test_comparison_operators()
-    test_different_bool_syntax()
+    # test_basic_math_operators()
+    # test_comparison_operators()
+    # test_different_bool_syntax()
+    test_let_syntax()
     println("--- TESTS PERFORMED ---")
 end
 
@@ -111,6 +144,15 @@ function test_different_bool_syntax()
     @assert(meta_eval(:( if 2 < 6 4 else 1 end)) == 4)
 
     println("<<< DIFFERENT BOOL SYNTAX TESTED <<<")
+end
+
+function test_let_syntax()
+    println("*** LET SYNTAX ***")
+    @assert(meta_eval(:(let x = 1; x end)) == 1)
+    @assert(meta_eval(:(let x = 2; x*3 end)) == 6)
+    @assert(meta_eval(:(let a = 1, b = 2; let a = 3; a+b end end)) == 5)
+    @assert(meta_eval(:(let a = 1; a + 2 end)) == 3)
+    println("*** TEST OF LET DONE SYNTAX ***")
 end
 
 test_project()
