@@ -22,8 +22,8 @@ end
 
 function meta_eval(exp)
     if(debug)
-        println(exp)
         println(typeof(exp))
+        println(exp)
     end
     if typeof(exp) == Expr
         if exp.head == :call
@@ -43,8 +43,7 @@ function meta_eval(exp)
         elseif exp.head == :if
             eval_if(exp.args)
         elseif exp.head == :block
-            #!!! Not ready implemented only right now a helper function to evaluate blocks of if from python syntax
-            return exp.args[2]
+            eval_block(exp.args)
         end
     else
         return exp
@@ -57,6 +56,16 @@ function eval_if(if_exp_args)
        return meta_eval(if_exp_args[3])
     end
     return meta_eval(if_exp_args[2])
+end
+
+function eval_block(block_exp)
+    # Evaluate each expression in the block
+    result = nothing
+    for exp in block_exp
+        result = meta_eval(exp)
+    end
+    # Return the result of the last expression
+    return result
 end
 
 function test_project()
