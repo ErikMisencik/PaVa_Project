@@ -94,34 +94,16 @@ function eval_if(if_exp_args, scope)
     return meta_eval(if_exp_args[2], scope)
 end
 
-function eval_block(block_exp, scope)
-   # println(block_exp)
-    #println(typeof(block_exp))
-    args_length = length(block_exp)
-    #println(args_length)
-
+function eval_block(block_args, scope)
+    #block_args represent the instructions inside the block body
+    args_length = length(block_args)
+    #in julia arrays start at 1
     i = 1
     while i < args_length 
-        println(i)
-        println(block_exp[i])
-        #meta_eval(block_exp.args[i])
+        meta_eval(block_args[i])
         i += 1 
-
     end
-    println(i)
-
-
-
-    println(meta_eval((block_exp[i])))
-    return meta_eval(block_exp[i])
+    return meta_eval(block_args[i])
 end
 
-#test_project()
-
-#dump((1+2; 2*3; 3/4))
-
-#x = :(1+2; 2*3; 3/4)
-#dump(x)
-
-
-#meta_eval(:(1+2; 2*3; 3/4))
+test_project()

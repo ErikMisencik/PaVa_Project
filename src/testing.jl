@@ -3,7 +3,7 @@ function test_project()
     test_basic_math_operators()
     test_comparison_operators()
     test_different_bool_syntax()
-  #  test_blocks()
+    test_blocks()
    # test_let()
     println("--- TESTS PERFORMED ---")
 end
@@ -56,6 +56,10 @@ function test_blocks()
     println(">>> TEST BLOCKS >>>")
     @assert(meta_eval(:(1+2; 2*3; 3/4)) == 0.75)
     @assert(meta_eval(:(begin 1+2; 2*3; 3/4 end)) == 0.75)
+    #should evaluate right if you could define vars in meta_eval
+    # @assert(meta_eval(:((a = 0; a +=1; a))) == 1)
+    #should evaluate right if println is implemented
+    #@assert(meta_eval(:(begin println("first"); println("second"); "test" end)) == "test")
     println(">>> BLOCKS TESTED >>>")
 end
 
