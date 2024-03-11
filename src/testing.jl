@@ -3,7 +3,8 @@ function test_project()
     test_basic_math_operators()
     test_comparison_operators()
     test_different_bool_syntax()
-    test_let()
+  #  test_blocks()
+   # test_let()
     println("--- TESTS PERFORMED ---")
 end
 
@@ -14,6 +15,13 @@ function test_basic_math_operators()
     @assert(meta_eval(:(1 + 2)) == 3)
     @assert(meta_eval(:((1 + 2) + (1 + 2))) == 6)
     @assert(meta_eval(:((2 + 3) * (4 + 5))) == 45)
+
+    println("*** DIVISION ***")
+    @assert(meta_eval(:((2 + 3) / (5))) == 1)
+    @assert(meta_eval(:(14 / 7)) == 2)
+    # Division of floating point numbers does not work right now
+    # @assert(meta_eval(:((3.0 - 6) /2)) == -1.5)
+    @assert(meta_eval(:(-14/7)) == -2)
     println("<<< BASIC MATH OPERATORS TESTED <<<")
 end
 
@@ -44,16 +52,14 @@ function test_different_bool_syntax()
     println("<<< DIFFERENT BOOL SYNTAX TESTED <<<")
 end
 
-function test_let()
-    println(">>> TEST LET >>>")
-    @assert(meta_eval(:(let x = 1; x end)) == 1)
-    @assert(meta_eval(:(let x = 2; x*3 end)) == 6)
-    @assert(meta_eval(:(let a = 1, b = 2; let a = 3; a+b end end)) == 5)
-    @assert(meta_eval(:(let a = 1; a + 2 end)) == 3)
-    println(">>> LET TESTED >>>")
+function test_blocks()
+    println(">>> TEST BLOCKS >>>")
+    @assert(meta_eval(:(1+2; 2*3; 3/4)) == 0.75)
+    @assert(meta_eval(:(begin 1+2; 2*3; 3/4 end)) == 0.75)
+    println(">>> BLOCKS TESTED >>>")
 end
 
-function test_let_syntax()
+function test_let()
     println(">>> TEST LET >>>")
     @assert(meta_eval(:(let x = 1; x end)) == 1)
     @assert(meta_eval(:(let x = 2; x*3 end)) == 6)

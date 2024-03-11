@@ -34,6 +34,8 @@ function meta_eval(exp, scope=Dict())
                 return meta_eval(exp.args[2], scope) + meta_eval(exp.args[3], scope)
             elseif exp.args[1] == :*  
                 return meta_eval(exp.args[2], scope) * meta_eval(exp.args[3], scope)
+            elseif exp.args[1] == :/  
+                return meta_eval(exp.args[2], scope) / meta_eval(exp.args[3], scope)
             elseif exp.args[1] == :<
                 return meta_eval(exp.args[2], scope) < meta_eval(exp.args[3], scope)
             elseif exp.args[1] == :>
@@ -93,13 +95,33 @@ function eval_if(if_exp_args, scope)
 end
 
 function eval_block(block_exp, scope)
-    # Evaluate each expression in the block
-    result = nothing
-    for exp in block_exp
-        result = meta_eval(exp, scope)
+   # println(block_exp)
+    #println(typeof(block_exp))
+    args_length = length(block_exp)
+    #println(args_length)
+
+    i = 1
+    while i < args_length 
+        println(i)
+        println(block_exp[i])
+        #meta_eval(block_exp.args[i])
+        i += 1 
+
     end
-    # Return the result of the last expression
-    return result
+    println(i)
+
+
+
+    println(meta_eval((block_exp[i])))
+    return meta_eval(block_exp[i])
 end
 
-test_project()
+#test_project()
+
+#dump((1+2; 2*3; 3/4))
+
+#x = :(1+2; 2*3; 3/4)
+#dump(x)
+
+
+#meta_eval(:(1+2; 2*3; 3/4))
