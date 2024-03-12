@@ -12,6 +12,22 @@ debug = false
 # end
 # metajulia_repl()
 
+function metajulia_repl()
+    while true
+        print(">> ")
+        result = ""
+        input = ""
+        while true
+            input = input * "\n" * readline()
+            result = Meta.parse(input, 1; greedy=true, raise = false)
+            if result[1].head != :incomplete
+                break
+            end
+        end
+        println(meta_eval(result[1]))
+    end
+end
+
 """
 Could lead to very interesting use cases. If we are able to read julia code as string we could expose an api that takes julia code as input and we can process
 this with our meta evaluator.
@@ -100,10 +116,10 @@ function eval_block(block_args, scope)
     #in julia arrays start at 1
     i = 1
     while i < args_length 
-        meta_eval(block_args[i])
+        meta_eval(block_args[i], scope)
         i += 1 
     end
-    return meta_eval(block_args[i])
+    return meta_eval(block_args[i], scope)
 end
 
 test_project()
