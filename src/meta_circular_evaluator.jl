@@ -56,6 +56,8 @@ function meta_eval(exp, scope=Dict())
                 return meta_eval(exp.args[2], scope) < meta_eval(exp.args[3], scope)
             elseif exp.args[1] == :>
                 return meta_eval(exp.args[2], scope) > meta_eval(exp.args[3], scope)
+            elseif is_symbol(exp.args[1])
+                return eval_func_call(exp.args, scope)
             end
         elseif exp.head == :&&
             return meta_eval(exp.args[1], scope) && meta_eval(exp.args[2], scope)
@@ -90,16 +92,55 @@ function eval_let(let_exp_args, outer_scope)
     for exp in let_exp_args
         if exp.head == :(=)
             var_name = exp.args[1]
-            var_value = meta_eval(exp.args[2], local_scope)
-            local_scope[var_name] = var_value  # Update local_scope
-            # In eval_let, after updating local_scope
-            #println("Updated local_scope: ", local_scope)
+            if is_expression(var_name)
+                # Function Definition
+                eval_let_func_def(var_name, exp.args[2], local_scope)
+            else
+                # Var Assignment
+                var_value = meta_eval(exp.args[2], local_scope)
+                local_scope[var_name] = var_value  # Update local_scope
+                # In eval_let, after updating local_scope
+                #println("Updated local_scope: ", local_scope)
+            end
         else
             result = meta_eval(exp, local_scope)  # Use updated local_scope
         end
     end
     #println("*** Final result of 'let' block: ", result)
     return result
+end
+
+function eval_let_func_def(function_decl, function_exp, scope)
+        # Extract function parameters and body
+        name = function_decl.args[1]
+        params = function_decl.args[2:end]
+        body = function_exp.args[end]
+
+        params = is_symbol(params) ? (params,) : params     # Put param in tuple if singular one param
+        function_object = Expr(:function, params..., body)  # Create a function object
+        scope[name] = function_object   # Update scope
+end
+
+function eval_func_call(func_call_exp, scope)
+    name = func_call_exp[1]
+    local_scope_vals = func_call_exp[2:end]
+
+    # Check if the function is defined in the scope
+    if haskey(scope, name) && typeof(scope[name]) == Expr && scope[name].head == :function
+        function_object = scope[name]
+        params = function_object.args[1:end-1]
+        body = function_object.args[end]
+
+        # Create a local scope for the function call
+        local_scope = Dict(zip(params, local_scope_vals))
+
+        # Evaluate the function body in the local scope
+        result = meta_eval(body, local_scope)
+
+        return result
+    else
+        error("Function '$name' not defined.")
+    end
 end
 
 function eval_if(if_exp_args, scope)
@@ -120,6 +161,14 @@ function eval_block(block_args, scope)
         i += 1 
     end
     return meta_eval(block_args[i], scope)
+end
+
+function is_expression(var)
+    return isa(var, Expr)
+end
+
+function is_symbol(var)
+    return isa(var, Symbol)
 end
 
 test_project()

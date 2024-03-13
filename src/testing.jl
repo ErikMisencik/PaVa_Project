@@ -60,14 +60,22 @@ function test_blocks()
     # @assert(meta_eval(:((a = 0; a +=1; a))) == 1)
     #should evaluate right if println is implemented
     #@assert(meta_eval(:(begin println("first"); println("second"); "test" end)) == "test")
-    println(">>> BLOCKS TESTED >>>")
+    println("<<< BLOCKS TESTED <<<")
 end
 
 function test_let()
     println(">>> TEST LET >>>")
+
+    println("*** ASSIGNMENT WITH LEXICAL SCOPE ***")
     @assert(meta_eval(:(let x = 1; x end)) == 1)
     @assert(meta_eval(:(let x = 2; x*3 end)) == 6)
     @assert(meta_eval(:(let a = 1, b = 2; let a = 3; a+b end end)) == 5)
     @assert(meta_eval(:(let a = 1; a + 2 end)) == 3)
-    println(">>> LET TESTED >>>")
+
+    println("*** FUNCTION DEFINITION ***")
+    @assert(meta_eval(:(let x(y) = y+1; x(1) end)) == 2)
+    @assert(meta_eval(:(let x(y,z) = y+z; x(1,2) end)) == 3)
+    @assert(meta_eval(:(let x = 1, y(x) = x+1; y(x+1) end)) == 3)
+
+    println("<<< LET TESTED <<<")
 end
