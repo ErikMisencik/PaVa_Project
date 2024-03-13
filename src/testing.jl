@@ -58,8 +58,7 @@ function test_blocks()
     @assert(meta_eval(:(begin 1+2; 2*3; 3/4 end)) == 0.75)
     @assert(meta_eval(:((a = 0; a +=1; a))) == 1)
     @assert(meta_eval(:((a = 0; a -=1; a))) == -1)
-    #should evaluate right if println is implemented
-    #@assert(meta_eval(:(begin println("first"); println("second"); "test" end)) == "test")
+    @assert(meta_eval(:(begin println("first"); println("second"); "test" end)) == "test")
     println("<<< BLOCKS TESTED <<<")
 end
 

@@ -92,6 +92,8 @@ function eval_call(call, scope)
         return meta_eval(call.args[2], scope) < meta_eval(call.args[3], scope)
     elseif call.args[1] == :>
         return meta_eval(call.args[2], scope) > meta_eval(call.args[3], scope)
+    elseif call.args[1] == :println
+        return println(call.args[2])
     elseif is_symbol(call.args[1])
         return eval_func_call(call.args, scope)
     else
