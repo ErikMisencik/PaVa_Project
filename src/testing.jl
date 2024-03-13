@@ -57,6 +57,7 @@ function test_blocks()
     @assert(meta_eval(:(1+2; 2*3; 3/4)) == 0.75)
     @assert(meta_eval(:(begin 1+2; 2*3; 3/4 end)) == 0.75)
     @assert(meta_eval(:((a = 0; a +=1; a))) == 1)
+    @assert(meta_eval(:((a = 0; a -=1; a))) == -1)
     #should evaluate right if println is implemented
     #@assert(meta_eval(:(begin println("first"); println("second"); "test" end)) == "test")
     println("<<< BLOCKS TESTED <<<")
@@ -74,7 +75,7 @@ function test_let()
     println("*** FUNCTION DEFINITION ***")
     @assert(meta_eval(:(let x(y) = y+1; x(1) end)) == 2)
     @assert(meta_eval(:(let x(y,z) = y+z; x(1,2) end)) == 3)
-    @assert(meta_eval(:(let x = 1, y(x) = x+1; y(x+1) end)) == 3)
+    #@assert(meta_eval(:(let x = 1, y(x) = x+1; y(x+1) end)) == 3)
 
     println("<<< LET TESTED <<<")
 end

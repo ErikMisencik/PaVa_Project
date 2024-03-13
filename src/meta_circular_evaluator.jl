@@ -62,7 +62,9 @@ function meta_eval(exp, scope=Dict())
         elseif exp.head == :(=)  # Handling assignment
             return assign_var(exp.args[1], exp.args[2], scope)
         elseif exp.head == :+=
-           return assign_var(exp.args[1], meta_eval(exp.args[1], scope) + exp.args[2], scope)  
+           return assign_var(exp.args[1], meta_eval(exp.args[1], scope) + exp.args[2], scope) 
+        elseif exp.head == :-=
+            return assign_var(exp.args[1], meta_eval(exp.args[1], scope) - exp.args[2], scope) 
         end
     elseif typeof(exp) == Symbol  # Handling variables
         if haskey(scope, exp)
