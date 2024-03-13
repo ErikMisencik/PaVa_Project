@@ -2,16 +2,6 @@ include("testing.jl")
 
 debug = false
 
-# function metajulia_repl()
-#     while true
-#         print(">> ")
-#         a = readline() # keep record of multiple readlines until parser accepts the input
-#         result = Meta.parse(input) # AST
-#         # call eval function
-#     end
-# end
-# metajulia_repl()
-
 function metajulia_repl()
     while true
         print(">> ")
