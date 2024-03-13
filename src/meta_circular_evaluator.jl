@@ -71,7 +71,12 @@ function eval_operator(operator_exp, scope)
     elseif operator_exp.head == :let
         return eval_let(operator_exp.args, scope)
     elseif operator_exp.head == :(=)  # Handling assignment
+        # if call is a function definition
+        if is_expression(operator_exp.args[1])
+            return eval_let_func_def(operator_exp.args[1], operator_exp.args[2], scope)
+        else
         return assign_var(operator_exp.args[1], operator_exp.args[2], scope)
+        end
     elseif operator_exp.head == :+=
         return assign_var(operator_exp.args[1], meta_eval(operator_exp.args[1], scope) + operator_exp.args[2], scope)
     elseif operator_exp.head == :-=
@@ -95,7 +100,12 @@ function eval_call(call, scope)
     elseif call.args[1] == :println
         return println(call.args[2])
     elseif is_symbol(call.args[1])
-        return eval_func_call(call.args, scope)
+        if is_expression(call.args[2])
+            call.args[2] = meta_eval(call.args[2], scope) # TODO is this legal? (joao asking)
+            return  eval_func_call(call.args , scope)
+        else
+            return eval_func_call(call.args, scope)
+        end
     else
         error("Undefined call ", call.args[1])
     end

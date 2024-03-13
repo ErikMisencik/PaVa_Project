@@ -74,7 +74,7 @@ function test_let()
     println("*** FUNCTION DEFINITION ***")
     @assert(meta_eval(:(let x(y) = y+1; x(1) end)) == 2)
     @assert(meta_eval(:(let x(y,z) = y+z; x(1,2) end)) == 3)
-    #@assert(meta_eval(:(let x = 1, y(x) = x+1; y(x+1) end)) == 3)
+    @assert(meta_eval(:(let x = 1, y(x) = x+1; y(x+1) end)) == 3)
 
     println("<<< LET TESTED <<<")
 end
