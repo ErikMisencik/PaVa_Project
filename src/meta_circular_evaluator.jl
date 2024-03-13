@@ -9,7 +9,7 @@ function metajulia_repl()
         input = ""
         while true
             input = input * "\n" * readline()
-            result = Meta.parse(input, 1; greedy=true, raise = false)
+            result = Meta.parse(input, 1; greedy=true, raise=false)
             if result[1].head != :incomplete
                 break
             end
@@ -29,43 +29,13 @@ function meta_eval_string(input_string)
 end
 
 function meta_eval(exp, scope=Dict())
-    if(debug)
+    if (debug)
         println(typeof(exp))
         println(exp)
         println("Current scope: ", scope)
     end
-    if typeof(exp) == Expr
-        if exp.head == :call
-            if exp.args[1] == :+
-                return meta_eval(exp.args[2], scope) + meta_eval(exp.args[3], scope)
-            elseif exp.args[1] == :*  
-                return meta_eval(exp.args[2], scope) * meta_eval(exp.args[3], scope)
-            elseif exp.args[1] == :/  
-                return meta_eval(exp.args[2], scope) / meta_eval(exp.args[3], scope)
-            elseif exp.args[1] == :<
-                return meta_eval(exp.args[2], scope) < meta_eval(exp.args[3], scope)
-            elseif exp.args[1] == :>
-                return meta_eval(exp.args[2], scope) > meta_eval(exp.args[3], scope)
-            elseif is_symbol(exp.args[1])
-                return eval_func_call(exp.args, scope)
-            end
-        elseif exp.head == :&&
-            return meta_eval(exp.args[1], scope) && meta_eval(exp.args[2], scope)
-        elseif exp.head == :||
-            return meta_eval(exp.args[1], scope) || meta_eval(exp.args[2], scope)
-        elseif exp.head == :if
-            eval_if(exp.args, scope)
-        elseif exp.head == :block
-            eval_block(exp.args, scope)
-        elseif exp.head == :let
-            return eval_let(exp.args, scope)
-        elseif exp.head == :(=)  # Handling assignment
-            return assign_var(exp.args[1], exp.args[2], scope)
-        elseif exp.head == :+=
-           return assign_var(exp.args[1], meta_eval(exp.args[1], scope) + exp.args[2], scope) 
-        elseif exp.head == :-=
-            return assign_var(exp.args[1], meta_eval(exp.args[1], scope) - exp.args[2], scope) 
-        end
+    if is_expression(exp)
+        eval_exp(exp, scope)
     elseif typeof(exp) == Symbol  # Handling variables
         if haskey(scope, exp)
             return scope[exp]
@@ -74,6 +44,44 @@ function meta_eval(exp, scope=Dict())
         end
     else
         return exp
+    end
+end
+
+function eval_exp(exp, scope)
+    if exp.head == :call
+        eval_call(exp, scope)
+    elseif exp.head == :&&
+        return meta_eval(exp.args[1], scope) && meta_eval(exp.args[2], scope)
+    elseif exp.head == :||
+        return meta_eval(exp.args[1], scope) || meta_eval(exp.args[2], scope)
+    elseif exp.head == :if
+        eval_if(exp.args, scope)
+    elseif exp.head == :block
+        eval_block(exp.args, scope)
+    elseif exp.head == :let
+        return eval_let(exp.args, scope)
+    elseif exp.head == :(=)  # Handling assignment
+        return assign_var(exp.args[1], exp.args[2], scope)
+    elseif exp.head == :+=
+        return assign_var(exp.args[1], meta_eval(exp.args[1], scope) + exp.args[2], scope)
+    elseif exp.head == :-=
+        return assign_var(exp.args[1], meta_eval(exp.args[1], scope) - exp.args[2], scope)
+    end
+end
+
+function eval_call(call, scope)
+    if call.args[1] == :+
+        return meta_eval(call.args[2], scope) + meta_eval(call.args[3], scope)
+    elseif call.args[1] == :*
+        return meta_eval(call.args[2], scope) * meta_eval(call.args[3], scope)
+    elseif call.args[1] == :/
+        return meta_eval(call.args[2], scope) / meta_eval(call.args[3], scope)
+    elseif call.args[1] == :<
+        return meta_eval(call.args[2], scope) < meta_eval(call.args[3], scope)
+    elseif call.args[1] == :>
+        return meta_eval(call.args[2], scope) > meta_eval(call.args[3], scope)
+    elseif is_symbol(call.args[1])
+        return eval_func_call(call.args, scope)
     end
 end
 
@@ -104,14 +112,14 @@ function eval_let(let_exp_args, outer_scope)
 end
 
 function eval_let_func_def(function_decl, function_exp, scope)
-        # Extract function parameters and body
-        name = function_decl.args[1]
-        params = function_decl.args[2:end]
-        body = function_exp.args[end]
+    # Extract function parameters and body
+    name = function_decl.args[1]
+    params = function_decl.args[2:end]
+    body = function_exp.args[end]
 
-        params = is_symbol(params) ? (params,) : params     # Put param in tuple if singular one param
-        function_object = Expr(:function, params..., body)  # Create a function object
-        scope[name] = function_object   # Update scope
+    params = is_symbol(params) ? (params,) : params     # Put param in tuple if singular one param
+    function_object = Expr(:function, params..., body)  # Create a function object
+    scope[name] = function_object   # Update scope
 end
 
 function eval_func_call(func_call_exp, scope)
@@ -139,7 +147,7 @@ end
 function eval_if(if_exp_args, scope)
     # if_exp_args[1] is the part of the if exp that decides if args[2] or [3] should be returned
     if !meta_eval(if_exp_args[1], scope)
-       return meta_eval(if_exp_args[3], scope)
+        return meta_eval(if_exp_args[3], scope)
     end
     return meta_eval(if_exp_args[2], scope)
 end
@@ -147,9 +155,9 @@ end
 function eval_block(block_args, scope)
     args_length = length(block_args)     #block_args represent the instructions inside the block body
     i = 1     #in julia arrays start at 1
-    while i < args_length 
+    while i < args_length
         meta_eval(block_args[i], scope)
-        i += 1 
+        i += 1
     end
     return meta_eval(block_args[i], scope)
 end
