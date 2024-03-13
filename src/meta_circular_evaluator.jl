@@ -60,10 +60,9 @@ function meta_eval(exp, scope=Dict())
         elseif exp.head == :let
             return eval_let(exp.args, scope)
         elseif exp.head == :(=)  # Handling assignment
-            var_name = exp.args[1]
-            var_value = meta_eval(exp.args[2], scope)
-            scope[var_name] = var_value
-            return var_value
+            return assign_var(exp.args[1], exp.args[2], scope)
+        elseif exp.head == :+=
+           return assign_var(exp.args[1], meta_eval(exp.args[1], scope) + exp.args[2], scope)  
         end
     elseif typeof(exp) == Symbol  # Handling variables
         if haskey(scope, exp)
@@ -76,6 +75,12 @@ function meta_eval(exp, scope=Dict())
     end
 end
 
+function assign_var(var_name, var_value_exp, scope) # maybe in a later point of the project the var_name should also be evaluated
+    var_value = meta_eval(var_value_exp, scope)
+    scope[var_name] = var_value # Update scope
+    return var_value
+end
+
 function eval_let(let_exp_args, outer_scope)
     local_scope = deepcopy(outer_scope)  # Inherit outer scope
     result = nothing
@@ -86,11 +91,7 @@ function eval_let(let_exp_args, outer_scope)
                 # Function Definition
                 eval_let_func_def(var_name, exp.args[2], local_scope)
             else
-                # Var Assignment
-                var_value = meta_eval(exp.args[2], local_scope)
-                local_scope[var_name] = var_value  # Update local_scope
-                # In eval_let, after updating local_scope
-                #println("Updated local_scope: ", local_scope)
+                assign_var(var_name, meta_eval(exp.args[2], local_scope), local_scope)
             end
         else
             result = meta_eval(exp, local_scope)  # Use updated local_scope
@@ -142,10 +143,8 @@ function eval_if(if_exp_args, scope)
 end
 
 function eval_block(block_args, scope)
-    #block_args represent the instructions inside the block body
-    args_length = length(block_args)
-    #in julia arrays start at 1
-    i = 1
+    args_length = length(block_args)     #block_args represent the instructions inside the block body
+    i = 1     #in julia arrays start at 1
     while i < args_length 
         meta_eval(block_args[i], scope)
         i += 1 
