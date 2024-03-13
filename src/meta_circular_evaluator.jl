@@ -36,36 +36,48 @@ function meta_eval(exp, scope=Dict())
     end
     if is_expression(exp)
         eval_exp(exp, scope)
-    elseif typeof(exp) == Symbol  # Handling variables
-        if haskey(scope, exp)
-            return scope[exp]
-        else
-            error("Undefined variable: ", exp)
-        end
+    elseif is_symbol(exp)
+        return_var(exp, scope)
     else
         return exp
     end
 end
 
+function return_var(name, scope)
+    if haskey(scope, name)
+        return scope[name]
+    else
+        error("Undefined variable: ", name)
+    end
+end
+
 function eval_exp(exp, scope)
-    if exp.head == :call
+    if exp.head != :call
+        eval_operator(exp, scope)
+    else
         eval_call(exp, scope)
-    elseif exp.head == :&&
-        return meta_eval(exp.args[1], scope) && meta_eval(exp.args[2], scope)
-    elseif exp.head == :||
-        return meta_eval(exp.args[1], scope) || meta_eval(exp.args[2], scope)
-    elseif exp.head == :if
-        eval_if(exp.args, scope)
-    elseif exp.head == :block
-        eval_block(exp.args, scope)
-    elseif exp.head == :let
-        return eval_let(exp.args, scope)
-    elseif exp.head == :(=)  # Handling assignment
-        return assign_var(exp.args[1], exp.args[2], scope)
-    elseif exp.head == :+=
-        return assign_var(exp.args[1], meta_eval(exp.args[1], scope) + exp.args[2], scope)
-    elseif exp.head == :-=
-        return assign_var(exp.args[1], meta_eval(exp.args[1], scope) - exp.args[2], scope)
+    end
+end
+
+function eval_operator(operator_exp, scope)
+    if operator_exp.head == :&&
+        return meta_eval(operator_exp.args[1], scope) && meta_eval(operator_exp.args[2], scope)
+    elseif operator_exp.head == :||
+        return meta_eval(operator_exp.args[1], scope) || meta_eval(operator_exp.args[2], scope)
+    elseif operator_exp.head == :if
+        eval_if(operator_exp.args, scope)
+    elseif operator_exp.head == :block
+        eval_block(operator_exp.args, scope)
+    elseif operator_exp.head == :let
+        return eval_let(operator_exp.args, scope)
+    elseif operator_exp.head == :(=)  # Handling assignment
+        return assign_var(operator_exp.args[1], operator_exp.args[2], scope)
+    elseif operator_exp.head == :+=
+        return assign_var(operator_exp.args[1], meta_eval(operator_exp.args[1], scope) + operator_exp.args[2], scope)
+    elseif operator_exp.head == :-=
+        return assign_var(operator_exp.args[1], meta_eval(operator_exp.args[1], scope) - operator_exp.args[2], scope)
+    else
+        error("Undefined operator ", operator_exp.head)
     end
 end
 
@@ -82,6 +94,8 @@ function eval_call(call, scope)
         return meta_eval(call.args[2], scope) > meta_eval(call.args[3], scope)
     elseif is_symbol(call.args[1])
         return eval_func_call(call.args, scope)
+    else
+        error("Undefined call ", call.args[1])
     end
 end
 
