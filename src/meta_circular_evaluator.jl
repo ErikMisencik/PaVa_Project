@@ -61,27 +61,9 @@ function eval_exp(exp, scope)
 end
 
 function eval_operator(operator_exp, scope)
-    if operator_exp.head == :&&
-        return meta_eval(operator_exp.args[1], scope) && meta_eval(operator_exp.args[2], scope)
-    elseif operator_exp.head == :||
-        return meta_eval(operator_exp.args[1], scope) || meta_eval(operator_exp.args[2], scope)
-    elseif operator_exp.head == :if
-        eval_if(operator_exp.args, scope)
-    elseif operator_exp.head == :block
-        eval_block(operator_exp.args, scope)
-    elseif operator_exp.head == :let
-        return eval_let(operator_exp.args, scope)
-    elseif operator_exp.head == :(=)  # Handling assignment
-        # if call is a function definition
-        if is_expression(operator_exp.args[1])
-            return eval_let_func_def(operator_exp.args[1], operator_exp.args[2], scope)
-        else
-        return assign_var(operator_exp.args[1], operator_exp.args[2], scope)
-        end
-    elseif operator_exp.head == :+=
-        return assign_var(operator_exp.args[1], meta_eval(operator_exp.args[1], scope) + operator_exp.args[2], scope)
-    elseif operator_exp.head == :-=
-        return assign_var(operator_exp.args[1], meta_eval(operator_exp.args[1], scope) - operator_exp.args[2], scope)
+    if haskey(default_sym_dict, operator_exp.head)
+        # the dict defines basic operation they can be retrieved by the value 
+        return default_sym_dict[operator_exp.head](operator_exp, scope)
     else
         error("Undefined operator ", operator_exp.head)
     end
@@ -186,6 +168,15 @@ end
 
 function is_symbol(var)
     return isa(var, Symbol)
+end
+
+function eval_assignment(operator_exp, scope)
+    # if call is a function definition
+    if is_expression(operator_exp.args[1])
+       return eval_let_func_def(operator_exp.args[1], operator_exp.args[2], scope)
+   else
+   return assign_var(operator_exp.args[1], operator_exp.args[2], scope)
+   end
 end
 
 test_project()
