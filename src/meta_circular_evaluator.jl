@@ -1,4 +1,5 @@
 include("testing.jl")
+include("default_env.jl")
 
 debug = false
 
@@ -87,18 +88,9 @@ function eval_operator(operator_exp, scope)
 end
 
 function eval_call(call, scope)
-    if call.args[1] == :+
-        return meta_eval(call.args[2], scope) + meta_eval(call.args[3], scope)
-    elseif call.args[1] == :*
-        return meta_eval(call.args[2], scope) * meta_eval(call.args[3], scope)
-    elseif call.args[1] == :/
-        return meta_eval(call.args[2], scope) / meta_eval(call.args[3], scope)
-    elseif call.args[1] == :<
-        return meta_eval(call.args[2], scope) < meta_eval(call.args[3], scope)
-    elseif call.args[1] == :>
-        return meta_eval(call.args[2], scope) > meta_eval(call.args[3], scope)
-    elseif call.args[1] == :println
-        return println(call.args[2])
+    if haskey(default_fun_dict, call.args[1])
+        # the dict defines basic operation they can be retrieved by the value 
+        return default_fun_dict[call.args[1]](call, scope)
     elseif is_symbol(call.args[1])
         if is_expression(call.args[2])
             call.args[2] = meta_eval(call.args[2], scope) # TODO is this legal? (joao asking)

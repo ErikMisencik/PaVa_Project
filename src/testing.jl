@@ -1,5 +1,6 @@
 function test_project()
     println("--- START TESTS ---")
+    @assert(meta_eval(:"Hello, world!") == "Hello, world!")
     test_basic_math_operators()
     test_comparison_operators()
     test_different_bool_syntax()
@@ -10,10 +11,14 @@ end
 
 function test_basic_math_operators()
     println(">>> TEST BASIC MATH OPERATORS >>>")
-    @assert(meta_eval(:1) == 1)
-    @assert(meta_eval(:"Hello, world!") == "Hello, world!")
-    @assert(meta_eval(:(1 + 2)) == 3)
+    
+    println("*** ADDITION ***")
+    @assert(meta_eval(:(1 + 2)) == 3, meta_eval(:(1 + 2)))
     @assert(meta_eval(:((1 + 2) + (1 + 2))) == 6)
+    
+    println("*** MULTIPLICATION ***")
+    @assert(meta_eval(:(1 * 2)) == 2)
+    @assert(meta_eval(:((-2 * 3))) == -6)
     @assert(meta_eval(:((2 + 3) * (4 + 5))) == 45)
 
     println("*** DIVISION ***")
@@ -64,7 +69,7 @@ end
 
 function test_let()
     println(">>> TEST LET >>>")
-
+    @assert(meta_eval(:1) == 1)
     println("*** ASSIGNMENT WITH LEXICAL SCOPE ***")
     @assert(meta_eval(:(let x = 1; x end)) == 1)
     @assert(meta_eval(:(let x = 2; x*3 end)) == 6)
