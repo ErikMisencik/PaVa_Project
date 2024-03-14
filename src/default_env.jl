@@ -1,6 +1,6 @@
 default_fun_dict = Dict(
     #math operators
-    :+ => (call, scope) -> (return reduce(+, map(operand -> meta_eval(operand, scope), call.args[2:end]))),
+    :+ => (call, scope) -> (return reduce(+, map(operand -> meta_eval(operand, scope), call.args[2:end]))), #not sure if the eval works
     :- => (call, scope) -> (return reduce(-, map(operand -> meta_eval(operand, scope), call.args[2:end]))),
     :* => (call, scope) -> (return reduce(*, map(operand -> meta_eval(operand, scope), call.args[2:end]))),
     :/ => (call, scope) -> (return reduce(/, map(operand -> meta_eval(operand, scope), call.args[2:end]))),

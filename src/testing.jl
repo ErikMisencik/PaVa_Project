@@ -36,8 +36,10 @@ function test_basic_math_operators()
     @assert(meta_eval(:((3 - 2 - 1 - 1 ))) == -1)
     @assert(meta_eval(:((3 * 2 * 1 ))) == 6)
     @assert(meta_eval(:((8 / 2 / 2 ))) == 2)
-
-
+    
+    #test if with multiple operands are evaluated
+    #this test fails. i think there is no implementation to call functions without args
+    @assert(meta_eval(:(x() = 3; 2 + 3 +x())) == 8)
     println("<<< BASIC MATH OPERATORS TESTED <<<")
 end
 
