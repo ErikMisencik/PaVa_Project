@@ -15,6 +15,10 @@ function test_basic_math_operators()
     println("*** ADDITION ***")
     @assert(meta_eval(:(1 + 2)) == 3, meta_eval(:(1 + 2)))
     @assert(meta_eval(:((1 + 2) + (1 + 2))) == 6)
+
+    println("*** SUBTRACTION ***")
+    @assert(meta_eval(:(1 - 2)) == -1)
+    @assert(meta_eval(:((1 - 2) - (1 - 2))) == 0)
     
     println("*** MULTIPLICATION ***")
     @assert(meta_eval(:(1 * 2)) == 2)
@@ -24,8 +28,7 @@ function test_basic_math_operators()
     println("*** DIVISION ***")
     @assert(meta_eval(:((2 + 3) / (5))) == 1)
     @assert(meta_eval(:(14 / 7)) == 2)
-    # Division of floating point numbers does not work right now
-    # @assert(meta_eval(:((3.0 - 6) /2)) == -1.5)
+    @assert(meta_eval(:((3.0 - 6) /2)) == -1.5)
     @assert(meta_eval(:(-14/7)) == -2)
     println("<<< BASIC MATH OPERATORS TESTED <<<")
 end
@@ -83,3 +86,12 @@ function test_let()
 
     println("<<< LET TESTED <<<")
 end
+
+function test_implicit_assignments()
+    println(">>> TEST IMPLICIT ASSIGNMENTS >>>")
+    @assert(meta_eval(:(x = 1)) == 1)
+
+
+    println("<<< IMPLICIT ASSIGNMENTS TESTED <<<")
+end
+
