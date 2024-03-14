@@ -30,6 +30,14 @@ function test_basic_math_operators()
     @assert(meta_eval(:(14 / 7)) == 2)
     @assert(meta_eval(:((3.0 - 6) /2)) == -1.5)
     @assert(meta_eval(:(-14/7)) == -2)
+
+    println("*** MORE THAN TWO OPERANDS ***")
+    @assert(meta_eval(:((2 + 3 + 4))) == 9)
+    @assert(meta_eval(:((3 - 2 - 1 - 1 ))) == -1)
+    @assert(meta_eval(:((3 * 2 * 1 ))) == 6)
+    @assert(meta_eval(:((8 / 2 / 2 ))) == 2)
+
+
     println("<<< BASIC MATH OPERATORS TESTED <<<")
 end
 
