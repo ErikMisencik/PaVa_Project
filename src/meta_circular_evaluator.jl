@@ -3,6 +3,7 @@ include("testing.jl")
 debug = false
 
 function metajulia_repl()
+    scope=Dict()
     while true
         print(">> ")
         result = ""
@@ -14,7 +15,7 @@ function metajulia_repl()
                 break
             end
         end
-        println(meta_eval(result[1]))
+        println(meta_eval(result[1], scope))
     end
 end
 
@@ -86,23 +87,31 @@ function eval_operator(operator_exp, scope)
     end
 end
 
+function eval_operation(op, args, scope) 
+    return reduce(eval(op), map(arg -> meta_eval(arg, scope), args))
+end
+
+function eval_binary_operation(op, args, scope) 
+    ## must solve
+    return meta_eval(args[1], scope) > meta_eval(args[2], scope)
+end
+
 function eval_call(call, scope)
-    if call.args[1] == :+
-        return meta_eval(call.args[2], scope) + meta_eval(call.args[3], scope)
-    elseif call.args[1] == :*
-        return meta_eval(call.args[2], scope) * meta_eval(call.args[3], scope)
-    elseif call.args[1] == :/
-        return meta_eval(call.args[2], scope) / meta_eval(call.args[3], scope)
-    elseif call.args[1] == :<
-        return meta_eval(call.args[2], scope) < meta_eval(call.args[3], scope)
-    elseif call.args[1] == :>
-        return meta_eval(call.args[2], scope) > meta_eval(call.args[3], scope)
-    elseif call.args[1] == :println
+    ops=[:+, :*, :/]
+    bin_ops=[:<,:>]
+    exp_type = call.args[1]
+    args = call.args[2:end]
+    if exp_type in ops
+        return eval_operation(exp_type, args, scope)
+    elseif exp_type in bin_ops
+        return eval_binary_operation(exp_type, args, scope)
+    elseif exp_type == :println
         return println(call.args[2])
-    elseif is_symbol(call.args[1])
+    elseif is_symbol(exp_type)
         if is_expression(call.args[2])
-            call.args[2] = meta_eval(call.args[2], scope) # TODO is this legal? (joao asking)
-            return  eval_func_call(call.args , scope)
+            operation = deepcopy(call.args)
+            operation[2] = meta_eval(call.args[2], scope)
+            return  eval_func_call(operation , scope)
         else
             return eval_func_call(call.args, scope)
         end
