@@ -76,8 +76,9 @@ function eval_call(call, scope)
         return default_fun_dict[call.args[1]](call, scope)
     elseif is_symbol(call.args[1])
         if is_expression(call.args[2])
-            call.args[2] = meta_eval(call.args[2], scope) # TODO is this legal? (joao asking)
-            return  eval_func_call(call.args , scope)
+            operation = deepcopy(call.args)
+            operation[2] = meta_eval(call.args[2], scope)
+            return  eval_func_call(operation , scope)
         else
             return eval_func_call(call.args, scope)
         end
