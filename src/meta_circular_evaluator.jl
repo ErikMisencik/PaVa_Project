@@ -79,21 +79,7 @@ function eval_call(call, scope)
         # the dict defines basic operation they can be retrieved by the value 
         return default_fun_dict[call_name](call, scope)
     end
-
-
-
-    if length(call.args) > 1
-        
-        if  is_expression(call.args[2])
-        operation = deepcopy(call.args)
-        operation[2] = meta_eval(call.args[2], scope)
-        return eval_func_call(operation, scope)
-        end
-        return eval_func_call(call.args, scope)
-
-    else
-        return eval_func_call(call.args, scope)
-    end
+    return eval_fun_call(call.args, scope)
 end
 
 function assign_var(var_name, var_value_exp, scope) # maybe in a later point of the project the var_name should also be evaluated
@@ -133,25 +119,30 @@ function eval_let_func_def(function_decl, function_exp, scope)
     scope[name] = function_object   # Update scope
 end
 
-function eval_func_call(func_call_exp, scope)
-    name = func_call_exp[1]
-    length(func_call_exp) == 1 ? local_scope_vals = [] : local_scope_vals = func_call_exp[2:end]
-        
+function eval_fun_call(fun_call_exp_args, scope)
+    fun_name = fun_call_exp_args[1]
+    param_values = deepcopy(fun_call_exp_args[2:end])       
+    for i in eachindex(param_values)
+        if is_expression(param_values[i])
+            param_values[i] = meta_eval(param_values[i], scope)
+        end
+    end
+
     # Check if the function is defined in the scope
-    if haskey(scope, name) && typeof(scope[name]) == Expr && scope[name].head == :function
-        function_object = scope[name]
+    if haskey(scope, fun_name) && typeof(scope[fun_name]) == Expr && scope[fun_name].head == :function
+        function_object = scope[fun_name]
         params = function_object.args[1:end-1]
         body = function_object.args[end]
 
         # Create a local scope for the function call
-        local_scope = Dict(zip(params, local_scope_vals))
+        local_scope = Dict(zip(params, param_values))
 
         # Evaluate the function body in the local scope
         result = meta_eval(body, local_scope)
 
         return result
     else
-        error("Function '$name' not defined.")
+        error("Function '$fun_name' not defined.")
     end
 end
 

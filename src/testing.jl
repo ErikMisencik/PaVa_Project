@@ -91,6 +91,8 @@ function test_let()
     @assert(meta_eval(:(let x(y) = y+1; x(1) end)) == 2)
     @assert(meta_eval(:(let x(y,z) = y+z; x(1,2) end)) == 3)
     @assert(meta_eval(:(let x = 1, y(x) = x+1; y(x+1) end)) == 3)
+    @assert(meta_eval(:(let multiply_three(x, y, z) = x * y * z; multiply_three(1, 2 ,3) end)) == 6)
+    @assert(meta_eval(:(let multiply_three(x, y, z) = x * y * z; multiply_three(1 + 2 ,2 +2 ,3 + 4) end)) == 84)
 
     println("<<< LET TESTED <<<")
 end
