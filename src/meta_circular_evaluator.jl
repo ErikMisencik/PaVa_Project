@@ -4,6 +4,7 @@ include("default_env.jl")
 debug = false
 
 function metajulia_repl()
+    scope=Dict()
     while true
         print(">> ")
         result = ""
@@ -15,7 +16,7 @@ function metajulia_repl()
                 break
             end
         end
-        println(meta_eval(result[1]))
+        println(meta_eval(result[1]), scope)
     end
 end
 
