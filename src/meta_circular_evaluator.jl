@@ -4,7 +4,7 @@ include("default_env.jl")
 debug = false
 
 function metajulia_repl()
-    scope=Dict()
+    scope = Dict()
     while true
         print(">> ")
         result = ""
@@ -70,20 +70,29 @@ function eval_operator(operator_exp, scope)
     end
 end
 
+# The order in which the subroutines are called could lead to problems.
+# Right now, first the predefined functions are called. If you want to override a predefined function it is not possible.
+# We should make an assumption if this should be possible. 
 function eval_call(call, scope)
-    if haskey(default_fun_dict, call.args[1])
+    call_name = call.args[1]
+    if haskey(default_fun_dict, call_name)
         # the dict defines basic operation they can be retrieved by the value 
-        return default_fun_dict[call.args[1]](call, scope)
-    elseif is_symbol(call.args[1])
-        if is_expression(call.args[2])
-            operation = deepcopy(call.args)
-            operation[2] = meta_eval(call.args[2], scope)
-            return  eval_func_call(operation , scope)
-        else
-            return eval_func_call(call.args, scope)
+        return default_fun_dict[call_name](call, scope)
+    end
+
+
+
+    if length(call.args) > 1
+        
+        if  is_expression(call.args[2])
+        operation = deepcopy(call.args)
+        operation[2] = meta_eval(call.args[2], scope)
+        return eval_func_call(operation, scope)
         end
+        return eval_func_call(call.args, scope)
+
     else
-        error("Undefined call ", call.args[1])
+        return eval_func_call(call.args, scope)
     end
 end
 
@@ -126,8 +135,8 @@ end
 
 function eval_func_call(func_call_exp, scope)
     name = func_call_exp[1]
-    local_scope_vals = func_call_exp[2:end]
-
+    length(func_call_exp) == 1 ? local_scope_vals = [] : local_scope_vals = func_call_exp[2:end]
+        
     # Check if the function is defined in the scope
     if haskey(scope, name) && typeof(scope[name]) == Expr && scope[name].head == :function
         function_object = scope[name]
@@ -175,10 +184,10 @@ end
 function eval_assignment(operator_exp, scope)
     # if call is a function definition
     if is_expression(operator_exp.args[1])
-       return eval_let_func_def(operator_exp.args[1], operator_exp.args[2], scope)
-   else
-   return assign_var(operator_exp.args[1], operator_exp.args[2], scope)
-   end
+        return eval_let_func_def(operator_exp.args[1], operator_exp.args[2], scope)
+    else
+        return assign_var(operator_exp.args[1], operator_exp.args[2], scope)
+    end
 end
 
 test_project()
