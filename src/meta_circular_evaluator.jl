@@ -20,6 +20,10 @@ function metajulia_repl()
     end
 end
 
+function metajulia_eval(exp, scope)
+    return meta_eval(exp, scope)
+end
+
 """
 Could lead to very interesting use cases. If we are able to read julia code as string we could expose an api that takes julia code as input and we can process
 this with our meta evaluator.
@@ -63,8 +67,10 @@ end
 
 function eval_operator(operator_exp, scope)
     if haskey(default_sym_dict, operator_exp.head)
+        
         # the dict defines basic operation they can be retrieved by the value 
-        return default_sym_dict[operator_exp.head](operator_exp, scope)
+        a = default_sym_dict[operator_exp.head](operator_exp, scope)
+        return a
     else
         error("Undefined operator ", operator_exp.head)
     end
