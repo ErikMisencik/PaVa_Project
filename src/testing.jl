@@ -9,6 +9,7 @@ function test_project()
     test_blocks()
     test_let()
     test_implicit_assignments()
+    test_reflection()
     println("--- TESTS PERFORMED ---")
 end
 
@@ -124,6 +125,14 @@ function test_implicit_assignments()
                                 end + baz), scope)  == 8)
     #@assert(meta_eval(:(let ; baz = 6 end + baz), scope)  == 9)
 
-    println("<<< IMPLICIT ASSIGNMENTS TESTED <<<")
+    println("<<< IMPLICIT ASSIGNMENTS TESTED <<<")   
 end
 
+function test_reflection()
+    scope=Dict()
+    println("<<< TEST OF REFLECTION <<<")
+    @assert(meta_eval(:(:foo), scope) == :foo)
+    #@assert(meta_eval(:(foo + bar), scope) == :(foo + bar))       this is problem right now 
+    @assert(meta_eval(:((1 + 2) * $(1 + 2)), scope) == ((1 + 2) * 3))
+    println("<<< REFLECTION TESTED <<<")
+end

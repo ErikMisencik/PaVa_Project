@@ -1,7 +1,7 @@
 include("testing.jl")
 include("default_env.jl")
 
-debug = false
+debug = true
 
 function metajulia_repl()
     scope=Dict()
@@ -44,8 +44,23 @@ function meta_eval(exp, scope=Dict())
         eval_exp(exp, scope)
     elseif is_symbol(exp)
         return_var(exp, scope)
+    elseif is_quote(exp)
+        eval_quote(exp, scope)
     else
         return exp
+    end
+end
+
+function eval_quote(quote_exp, scope)
+
+    if is_expression(quote_exp) && quote_exp.head == :$
+        # Evaluate the interpolated expression
+        return meta_eval(quote_exp.args[1], scope)
+    elseif isa(quote_exp, QuoteNode)
+        # Return the value of the QuoteNode as is
+        return quote_exp.value
+    else
+        return quote_exp
     end
 end
 
@@ -58,7 +73,10 @@ function return_var(name, scope)
 end
 
 function eval_exp(exp, scope)
-    if exp.head != :call
+    if exp.head == :quote
+        # Handle quoted expressions
+        eval_quote(exp, scope)
+    elseif exp.head != :call
         eval_operator(exp, scope)
     else
         eval_call(exp, scope)
@@ -178,6 +196,10 @@ end
 
 function is_expression(var)
     return isa(var, Expr)
+end
+
+function is_quote(quote_node)
+    return isa(quote_node, QuoteNode)
 end
 
 function is_symbol(var)
