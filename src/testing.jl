@@ -1,3 +1,5 @@
+using Test
+
 function test_project()
     println("--- START TESTS ---")
     @assert(meta_eval(:"Hello, world!") == "Hello, world!")
@@ -93,7 +95,12 @@ function test_let()
     @assert(meta_eval(:(let x = 1, y(x) = x+1; y(x+1) end)) == 3)
     @assert(meta_eval(:(let multiply_three(x, y, z) = x * y * z; multiply_three(1, 2 ,3) end)) == 6)
     @assert(meta_eval(:(let multiply_three(x, y, z) = x * y * z; multiply_three(1 + 2 ,2 +2 ,3 + 4) end)) == 84)
+    @test_throws UndefVarError my_function(-1)
 
+    println("*** Override default functions ***")
+    @assert(meta_eval(:(let +() = "override of plus_default_fun"; +() end)) == "override of plus_default_fun")
+    @assert(meta_eval(:(let println(a) = a + a; println(2) end)) == 4)
+    
     println("<<< LET TESTED <<<")
 end
 
