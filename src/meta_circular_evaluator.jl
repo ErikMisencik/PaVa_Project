@@ -37,9 +37,9 @@ function meta_eval(exp, scope=Dict())
         println("Current scope: ", scope)
     end
     if is_expression(exp)
-        eval_exp(exp, scope)
+        return eval_exp(exp, scope)
     elseif is_symbol(exp)
-        return_var(exp, scope)
+        return return_var(exp, scope)
     else
         return exp
     end
@@ -49,7 +49,7 @@ function return_var(name, scope)
     if haskey(scope, name)
         return scope[name]
     else
-        error("Undefined variable: ", name)
+        return name
     end
 end
 
@@ -71,7 +71,7 @@ function eval_operator(operator_exp, scope)
 end
 
 # First the scope is checked for a name reference. This allows to override default fun. 
-function eval_call(call, scope)
+function eval_call(call, scope)    
     fun_name = call.args[1]
     if is_fun_defined(fun_name, scope)
         return eval_fun_call(call.args, scope)
@@ -80,7 +80,28 @@ function eval_call(call, scope)
         # the dict defines basic operation they can be retrieved by the value 
         return default_fun_dict[fun_name](call, scope)
     end
+    if is_anonymous_call(call)
+        return eval_anonymous_call(call)
+    end
     throw(UndefVarError("Function '$fun_name' not defined."))
+end
+
+function eval_anonymous_call(call)
+    var_names = meta_eval(call.args[1].args[1])
+    var_values = call.args[2:end]
+    
+    if length(var_values) == 1
+        inner_scope = Dict(var_names => var_values[1])   
+    else
+        inner_scope = Dict(zip(var_names, var_values))   
+    end
+
+    fun_body = call.args[1].args[2].args[2]
+    return(meta_eval(fun_body, inner_scope))
+end
+
+function is_anonymous_call(call)
+    return call.args[1].head == :->
 end
 
 function is_default_fun_defined(fun_name)

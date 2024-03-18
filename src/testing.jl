@@ -27,6 +27,7 @@ function test_basic_math_operators()
     println("*** ADDITION ***")
     @assert(meta_eval(:(1 + 2)) == 3, meta_eval(:(1 + 2)))
     @assert(meta_eval(:((1 + 2) + (1 + 2))) == 6)
+    @test meta_eval(:(sum(5,2,4,5,5,6,6,43,2))) == 78 
 
     println("*** SUBTRACTION ***")
     @assert(meta_eval(:(1 - 2)) == -1)
@@ -110,15 +111,24 @@ function test_let()
     println("*** Override default functions ***")
     @assert(meta_eval(:(let +() = "override of plus_default_fun"; +() end)) == "override of plus_default_fun")
     @assert(meta_eval(:(let println(a) = a + a; println(2) end)) == 4)
-    
+
+    println("*** Assignment of anonymous functions ***")
+   
+    @test meta_eval(:((x -> x + 1)(2))) == 3 
+    @test meta_eval(:(((x, y) -> x + y)(1, 2))) == 3 
+    @test meta_eval(:((() -> 5)())) == 5 
+    @test meta_eval(:(sum(x -> x*x, 1, 10))) == 385 broken=true
+
+    @test meta_eval(:(incr =
+    let priv_counter = 0
+    () -> priv_counter = priv_counter + 1
+    end)) == 385 skip=true #call inc then 3 times
+
     println("<<< LET TESTED <<<")
 end
 
 function test_implicit_assignments()
     println(">>> TEST IMPLICIT ASSIGNMENTS >>>")
     @assert(meta_eval(:(x = 1)) == 1)
-
-
     println("<<< IMPLICIT ASSIGNMENTS TESTED <<<")
 end
-
