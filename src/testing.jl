@@ -3,12 +3,22 @@ using Test
 function test_project()
     println("--- START TESTS ---")
     @assert(meta_eval(:"Hello, world!") == "Hello, world!")
+    test_misc_symbols() 
     test_basic_math_operators()
     test_comparison_operators()
     test_different_bool_syntax()
     test_blocks()
     test_let()
     println("--- TESTS PERFORMED ---")
+end
+
+function test_misc_symbols() 
+    println(">>> TEST MISC SYMBOLS >>>")
+
+    println("*** TUPLES ***")
+    @test meta_eval(:(1, "Hallo", 3.14)) == (1, "Hallo", 3.14) 
+
+    println("<<< MISC SYMBOLS TESTED <<<")
 end
 
 function test_basic_math_operators()

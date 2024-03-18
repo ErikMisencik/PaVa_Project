@@ -21,5 +21,6 @@ default_sym_dict = Dict(
     :let => (operator_exp, scope) -> (return eval_let(operator_exp.args, scope)),
     :(=) => (operator_exp, scope) -> eval_assignment(operator_exp, scope),
     :+= => (operator_exp, scope) -> (return assign_var(operator_exp.args[1], meta_eval(operator_exp.args[1], scope) + operator_exp.args[2], scope)),
-    :-= => (operator_exp, scope) -> (return assign_var(operator_exp.args[1], meta_eval(operator_exp.args[1], scope) - operator_exp.args[2], scope))
+    :-= => (operator_exp, scope) -> (return assign_var(operator_exp.args[1], meta_eval(operator_exp.args[1], scope) - operator_exp.args[2], scope)),
+    :tuple => (operator_exp, scope) -> tuple(operator_exp.args...)
 )
