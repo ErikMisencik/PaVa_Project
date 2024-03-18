@@ -17,6 +17,7 @@ default_sym_dict = Dict(
     :&& => (operator_exp, scope) -> (return meta_eval(operator_exp.args[1], scope) && meta_eval(operator_exp.args[2], scope)),
     :|| => (operator_exp, scope) -> (return meta_eval(operator_exp.args[1], scope) || meta_eval(operator_exp.args[2], scope)),
     :if => (operator_exp, scope) -> eval_if(operator_exp.args, scope),
+    :elseif => (operator_exp, scope) -> eval_if(operator_exp.args, scope),
     :block => (operator_exp, scope) -> eval_block(operator_exp.args, scope),
     :let => (operator_exp, scope) -> (return eval_let(operator_exp.args, scope)),
     :(=) => (operator_exp, scope) -> eval_assignment(operator_exp, scope),

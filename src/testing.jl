@@ -69,7 +69,7 @@ function test_different_bool_syntax()
                             0 
                         end)) == 1)
     @assert(meta_eval(:( if 5 > 2 1 else 0 end)) == 1)
-    #@assert(meta_eval(:(if 3 < 2 1 elseif 2 > 3 2 else 0 end)) == 0)
+    @assert(meta_eval(:(if 3 < 2 1 elseif 2 > 3 2 else 0 end)) == 0)
     @assert(meta_eval(:( if 5 < 2 1 else 15 end)) == 15)
     @assert(meta_eval(:( if 2 < 6 4 else 1 end)) == 4)
 

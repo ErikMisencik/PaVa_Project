@@ -153,11 +153,17 @@ function eval_fun_call(fun_call_exp_args, scope)
 end
 
 function eval_if(if_exp_args, scope)
-    # if_exp_args[1] is the part of the if exp that decides if args[2] or [3] should be returned
-    if !meta_eval(if_exp_args[1], scope)
-        return meta_eval(if_exp_args[3], scope)
+    args_length = length(if_exp_args)
+    i = 1
+    # if_exp_args[] is the part of the if exp that decides if args[2] or [3] should be returned
+    while i < args_length
+        if meta_eval(if_exp_args[i], scope) # if_exp_args[i] is the boolean expression
+            return meta_eval(if_exp_args[i + 1], scope) # if_exp_args[i + 1] is the value to return
+        else 
+            i += 2
+        end
     end
-    return meta_eval(if_exp_args[2], scope)
+    return meta_eval(if_exp_args[end], scope)
 end
 
 function eval_block(block_args, scope)
