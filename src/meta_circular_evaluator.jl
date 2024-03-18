@@ -4,7 +4,7 @@ include("default_env.jl")
 debug = false
 
 function metajulia_repl()
-    scope = Dict()
+    scope=Dict()
     while true
         print(">> ")
         result = ""
@@ -16,7 +16,7 @@ function metajulia_repl()
                 break
             end
         end
-        println(meta_eval(result[1]), scope)
+        println(meta_eval(result[1], scope))
     end
 end
 
@@ -70,21 +70,16 @@ function eval_operator(operator_exp, scope)
     end
 end
 
-# First the scope is checked for a name reference. This allows to override default fun. 
+# The order in which the subroutines are called could lead to problems.
+# Right now, first the predefined functions are called. If you want to override a predefined function it is not possible.
+# We should make an assumption if this should be possible. 
 function eval_call(call, scope)
-    fun_name = call.args[1]
-    if is_fun_defined(fun_name, scope)
-        return eval_fun_call(call.args, scope)
-    end
-    if is_default_fun_defined(fun_name)
+    call_name = call.args[1]
+    if haskey(default_fun_dict, call_name)
         # the dict defines basic operation they can be retrieved by the value 
-        return default_fun_dict[fun_name](call, scope)
+        return default_fun_dict[call_name](call, scope)
     end
-    throw(UndefVarError("Function '$fun_name' not defined."))
-end
-
-function is_default_fun_defined(fun_name)
-    return haskey(default_fun_dict, fun_name)
+    return eval_fun_call(call.args, scope)
 end
 
 function assign_var(var_name, var_value_exp, scope) # maybe in a later point of the project the var_name should also be evaluated
@@ -132,22 +127,23 @@ function eval_fun_call(fun_call_exp_args, scope)
             param_values[i] = meta_eval(param_values[i], scope)
         end
     end
-    
-    function_object = scope[fun_name]
-    params = function_object.args[1:end-1]
-    body = function_object.args[end]
 
-    # Create a local scope for the function call
-    local_scope = Dict(zip(params, param_values))
+    # Check if the function is defined in the scope
+    if haskey(scope, fun_name) && typeof(scope[fun_name]) == Expr && scope[fun_name].head == :function
+        function_object = scope[fun_name]
+        params = function_object.args[1:end-1]
+        body = function_object.args[end]
 
-    # Evaluate the function body in the local scope
-    result = meta_eval(body, local_scope)
+        # Create a local scope for the function call
+        local_scope = Dict(zip(params, param_values))
 
-    return result
-end
+        # Evaluate the function body in the local scope
+        result = meta_eval(body, local_scope)
 
-function is_fun_defined(fun_name, scope)
-    return haskey(scope, fun_name) && typeof(scope[fun_name]) == Expr && scope[fun_name].head == :function
+        return result
+    else
+        error("Function '$fun_name' not defined.")
+    end
 end
 
 function eval_if(if_exp_args, scope)
