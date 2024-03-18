@@ -9,6 +9,8 @@ function test_project()
     test_different_bool_syntax()
     test_blocks()
     test_let()
+    test_implicit_assignments()
+    test_reflection()
     println("--- TESTS PERFORMED ---")
 end
 
@@ -73,7 +75,13 @@ function test_different_bool_syntax()
   
     println("*** PYTHON SYNTAX ***")
     @assert(meta_eval(:( if 3 > 2 1 else 0 end)) == 1)
+    @assert(meta_eval(:( if 3 > 2 
+                            1 
+                        else 
+                            0 
+                        end)) == 1)
     @assert(meta_eval(:( if 5 > 2 1 else 0 end)) == 1)
+    @assert(meta_eval(:(if 3 < 2 1 elseif 2 > 3 2 else 0 end)) == 0)
     @assert(meta_eval(:( if 5 < 2 1 else 15 end)) == 15)
     @assert(meta_eval(:( if 2 < 6 4 else 1 end)) == 4)
 
@@ -128,7 +136,27 @@ function test_let()
 end
 
 function test_implicit_assignments()
+    scope=Dict()
     println(">>> TEST IMPLICIT ASSIGNMENTS >>>")
     @assert(meta_eval(:(x = 1)) == 1)
-    println("<<< IMPLICIT ASSIGNMENTS TESTED <<<")
+    @assert(meta_eval(:(x = 1 + 2), scope) == 3)
+    @assert(meta_eval(:(x + 2), scope) == 5)
+    @assert(meta_eval(:(triple(a) = a + a + a), scope) !== nothing)
+    @assert(meta_eval(:(triple(x+3)), scope)  == 18)
+    @assert(metajulia_eval(:(baz = 3), scope)  == 3)
+    @assert(metajulia_eval(:(let x = 0 
+                                baz = 5
+                                end + baz), scope)  == 8)
+    #@assert(meta_eval(:(let ; baz = 6 end + baz), scope)  == 9)
+
+    println("<<< IMPLICIT ASSIGNMENTS TESTED <<<")   
+end
+
+function test_reflection()
+    scope=Dict()
+    println("<<< TEST OF REFLECTION <<<")
+    @assert(meta_eval(:(:foo), scope) == :foo)
+    #@assert(meta_eval(:(foo + bar), scope) == :(foo + bar))       this is problem right now 
+    @assert(meta_eval(:((1 + 2) * $(1 + 2)), scope) == ((1 + 2) * 3))
+    println("<<< REFLECTION TESTED <<<")
 end
