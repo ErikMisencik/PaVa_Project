@@ -101,7 +101,7 @@ function eval_call(call, scope)
         # the dict defines basic operation they can be retrieved by the value 
         return default_fun_dict[fun_name](call, scope)
     end
-    if is_anonymous_call(call)
+if is_anonymous_call(call)
         anonymous_Fun = Anonymous_Fun(meta_eval(call.args[1].args[1]), call.args[2:end], call.args[1].args[2].args[2])
         return eval_anonymous_call(anonymous_Fun)
     end
@@ -124,8 +124,10 @@ function eval_anonymous_call(anonymous_Fun)
 end
 
 function is_anonymous_call(call)
-    if call.head == :-> 
-        return true
+    if typeof(call.args[1]) == Expr
+        if call.args[1].head == :->
+            return true
+        end
     end
     return false
 end
