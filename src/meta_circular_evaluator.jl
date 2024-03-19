@@ -87,11 +87,8 @@ function eval_operator(operator_exp, scope)
     if haskey(default_sym_dict, operator_exp.head)      
         # the dict defines basic operation they can be retrieved by the value 
         return default_sym_dict[operator_exp.head](operator_exp, scope)
-    elseif is_anonymous_call(operator_exp)
-        return eval_anonymous_call(operator_exp)
-    else
-        error("Undefined operator ", operator_exp.head)
     end
+    throw(UndefVarError("Operator '$operator_exp.head' not defined."))
 end
 
 # First the scope is checked for a name reference. This allows to override default fun. 
@@ -129,10 +126,6 @@ end
 function is_anonymous_call(call)
     if call.head == :-> 
         return true
-    elseif typeof(call.args[1]) == Expr
-        if call.args[1].head == :->
-            return true
-        end
     end
     return false
 end

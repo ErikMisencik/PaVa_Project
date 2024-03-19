@@ -31,6 +31,7 @@ function test_basic_math_operators()
     @assert(meta_eval(:(1 + 2)) == 3, meta_eval(:(1 + 2)))
     @assert(meta_eval(:((1 + 2) + (1 + 2))) == 6)
     @test meta_eval(:(sum(5,2,4,5,5,6,6,43,2))) == 78 
+    @test meta_eval(:(sum((5+2),(4*2),(6/3)))) == 17 
 
     println("*** SUBTRACTION ***")
     @assert(meta_eval(:(1 - 2)) == -1)
@@ -158,6 +159,11 @@ function test_anonymous_functions()
     @test meta_eval(:(((x, y) -> x + y)(1, 2))) == 3 
     @test meta_eval(:(((x, y, z) -> x + y + z)(1, 2, 3))) == 6 
     
+    @test meta_eval(:(sum((() -> 1)(), 2, 3))) == 6 
+    @test meta_eval(:(sum(((x) -> x + 1)(1), 2, 3))) == 7 
+    @test meta_eval(:(sum(((x, y) -> x + y + 1)(1, 2), 2, 3))) == 9 
+    @test meta_eval(:(sum(((x, y, z) -> x + y + z + 1)(1, 2, 3), 2, 3))) == 12 
+
     @test meta_eval(:(sum(x -> x*x, 1, 10))) == 385 broken=true
 
     @test meta_eval(:(incr =
