@@ -9,6 +9,7 @@ function test_project()
     test_different_bool_syntax()
     test_blocks()
     test_let()
+    test_anonymous_functions()
     test_implicit_assignments()
     test_reflection()
     println("--- TESTS PERFORMED ---")
@@ -120,18 +121,6 @@ function test_let()
     @assert(meta_eval(:(let +() = "override of plus_default_fun"; +() end)) == "override of plus_default_fun")
     @assert(meta_eval(:(let println(a) = a + a; println(2) end)) == 4)
 
-    println("*** Assignment of anonymous functions ***")
-   
-    @test meta_eval(:((x -> x + 1)(2))) == 3 
-    @test meta_eval(:(((x, y) -> x + y)(1, 2))) == 3 
-    @test meta_eval(:((() -> 5)())) == 5 
-    @test meta_eval(:(sum(x -> x*x, 1, 10))) == 385 broken=true
-
-    @test meta_eval(:(incr =
-    let priv_counter = 0
-    () -> priv_counter = priv_counter + 1
-    end)) == 385 skip=true #call inc then 3 times
-
     println("<<< LET TESTED <<<")
 end
 
@@ -159,4 +148,22 @@ function test_reflection()
     #@assert(meta_eval(:(foo + bar), scope) == :(foo + bar))       this is problem right now 
     @assert(meta_eval(:((1 + 2) * $(1 + 2)), scope) == ((1 + 2) * 3))
     println("<<< REFLECTION TESTED <<<")
+end
+
+function test_anonymous_functions()
+    println("<<< TEST ASSIGNMENT OF ANONYMOUS FUNCTIONS <<<")
+ 
+    @test meta_eval(:((() -> 5)())) == 5 
+    @test meta_eval(:((x -> x + 1)(2))) == 3 
+    @test meta_eval(:(((x, y) -> x + y)(1, 2))) == 3 
+    @test meta_eval(:(((x, y, z) -> x + y + z)(1, 2, 3))) == 6 
+    
+    @test meta_eval(:(sum(x -> x*x, 1, 10))) == 385 broken=true
+
+    @test meta_eval(:(incr =
+    let priv_counter = 0
+    () -> priv_counter = priv_counter + 1
+    end)) == 385 skip=true #call inc then 3 times
+   
+    println("<<< ASSIGNMENT OF ANONYMOUS FUNCTIONS TESTED <<<")
 end

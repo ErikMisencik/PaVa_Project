@@ -87,7 +87,9 @@ function eval_operator(operator_exp, scope)
     if haskey(default_sym_dict, operator_exp.head)      
         # the dict defines basic operation they can be retrieved by the value 
         return default_sym_dict[operator_exp.head](operator_exp, scope)
-            else
+    elseif is_anonymous_call(operator_exp)
+        return eval_anonymous_call(operator_exp)
+    else
         error("Undefined operator ", operator_exp.head)
     end
 end
@@ -103,27 +105,36 @@ function eval_call(call, scope)
         return default_fun_dict[fun_name](call, scope)
     end
     if is_anonymous_call(call)
-        return eval_anonymous_call(call)
+        anonymous_Fun = Anonymous_Fun(meta_eval(call.args[1].args[1]), call.args[2:end], call.args[1].args[2].args[2])
+        return eval_anonymous_call(anonymous_Fun)
     end
     throw(UndefVarError("Function '$fun_name' not defined."))
 end
 
-function eval_anonymous_call(call)
-    var_names = meta_eval(call.args[1].args[1])
-    var_values = call.args[2:end]
-    
-    if length(var_values) == 1
-        inner_scope = Dict(var_names => var_values[1])   
-    else
-        inner_scope = Dict(zip(var_names, var_values))   
-    end
+struct Anonymous_Fun
+    inner_scope::Dict
+    body::Any # can be expression or return value
+end
 
-    fun_body = call.args[1].args[2].args[2]
-    return(meta_eval(fun_body, inner_scope))
+function Anonymous_Fun(var_names, var_values, body)
+    var_names = typeof(var_names) == Symbol ? [var_names] : var_names
+    inner_scope = Dict(zip(var_names, var_values))   
+    return Anonymous_Fun(inner_scope, body)
+end
+
+function eval_anonymous_call(anonymous_Fun)
+    return(meta_eval(anonymous_Fun.body, anonymous_Fun.inner_scope))
 end
 
 function is_anonymous_call(call)
-    return call.args[1].head == :->
+    if call.head == :-> 
+        return true
+    elseif typeof(call.args[1]) == Expr
+        if call.args[1].head == :->
+            return true
+        end
+    end
+    return false
 end
 
 function is_default_fun_defined(fun_name)
