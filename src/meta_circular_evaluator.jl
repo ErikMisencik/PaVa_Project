@@ -173,26 +173,26 @@ function eval_let_func_def(function_decl, function_exp, scope)
     scope[name] = function_object   # Update scope
 end
 
-function eval_fun_call(fun_call_exp_args, scope)
+struct UserFunction # System does not allow to use the name Function
+    body::Any
+    local_scope::Dict
+end
+
+function userFunction(fun_call_exp_args, scope)
     fun_name = fun_call_exp_args[1]
-    param_values = deepcopy(fun_call_exp_args[2:end])
+    param_values = map(x -> meta_eval(x, scope), fun_call_exp_args[2:end])
 
-    for i in eachindex(param_values)
-        param_values[i] = meta_eval(param_values[i], scope)
-    end
-
-    function_object = scope[fun_name]
-    params = function_object.args[1:end-1]
-    body = function_object.args[end]
-
-    # Create a local scope for the function call
+    fun_dev = scope[fun_name]
+    params = fun_dev.args[1:end-1]
     local_scope = Dict(zip(params, param_values))
+   
+    body = fun_dev.args[end]
+    return UserFunction(body, local_scope)
+end
 
-
-    # Evaluate the function body in the local scope
-    result = meta_eval(body, local_scope)
-
-    return result
+function eval_fun_call(fun_call_exp_args, scope)
+    fun = userFunction(fun_call_exp_args, scope)
+    return meta_eval(fun.body, fun.local_scope)
 end
 
 function is_fun_defined(fun_name, scope)
@@ -243,5 +243,3 @@ function eval_assignment(operator_exp, scope)
         return assign_var(operator_exp.args[1], operator_exp.args[2], scope)
     end
 end
-
-test_project()
