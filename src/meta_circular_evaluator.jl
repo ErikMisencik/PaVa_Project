@@ -235,9 +235,9 @@ function is_quote(quote_node)
     return isa(quote_node, QuoteNode)
 end
 
-function is_assignment(exp)
-    return exp.head == :(=)
-end
+# function is_assignment(exp)
+#     return exp.head == :(=)
+# end
 
 function is_symbol(var)
     return isa(var, Symbol)
@@ -258,6 +258,7 @@ function eval_assignment(operator_exp, scope)
 end
 
 meta_eval(:(a = () -> 0))
+
         
       
 # function eval_let(let_exp_args, outer_scope)
