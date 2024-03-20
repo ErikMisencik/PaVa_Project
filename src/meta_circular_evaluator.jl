@@ -165,8 +165,8 @@ end
 struct Fun_Def
     input_params::Any
     body::Any
-end
-
+end   
+         
 function assign_fun(function_decl, function_exp, scope)
     # Extract function parameters and body
     name = function_decl.args[1]
@@ -235,6 +235,10 @@ function is_quote(quote_node)
     return isa(quote_node, QuoteNode)
 end
 
+function is_assignment(exp)
+    return exp.head == :(=)
+end
+
 function is_symbol(var)
     return isa(var, Symbol)
 end
@@ -254,3 +258,54 @@ function eval_assignment(operator_exp, scope)
 end
 
 meta_eval(:(a = () -> 0))
+        
+      
+# function eval_let(let_exp_args, outer_scope)
+    
+#     let_exp_init = let_exp_args[1]
+#     let_exp_body = let_exp_args[2:end]
+#     local_scope = deepcopy(outer_scope)  # Inherit outer scope
+#     result = nothing
+
+#     if is_assignment(let_exp_init)   # if init only has 1 assignment
+#         eval_let_defs(let_exp_init, local_scope)
+#     else
+#         for exp in let_exp_init.args
+#             if (length(exp.args) > 1) && is_assignment(exp)   # if init is not empty
+#                 eval_let_defs(exp, local_scope)
+#             end
+#         end
+#     end
+
+#     for exp in let_exp_body
+#         if length(exp.args) > 1    # if body is not empty expression
+#             if is_assignment(exp)
+#                 eval_let_defs(exp, local_scope)
+#             else
+#                 result = meta_eval(exp, local_scope)  # Use updated local_scope
+#             end
+#         end
+#     end
+#     return result
+# end
+
+# function eval_let_defs(exp, scope)
+#     var_name = exp.args[1]
+
+#     if is_expression(var_name)
+#         eval_let_func_def(var_name, exp.args[2], scope)   # Function Definition
+#     else
+#         assign_var(var_name, meta_eval(exp.args[2], scope), scope)
+#     end
+# end
+      
+# function eval_let_func_def(function_decl, function_exp, scope)
+#     # Extract function parameters and body
+#     name = function_decl.args[1]
+#     params = function_decl.args[2:end]
+#     body = function_exp.args[end]
+
+#     params = is_symbol(params) ? (params,) : params     # Put param in tuple if singular one param
+#     function_object = Expr(:function, params..., body)  # Create a function object
+#     scope[name] = function_object   # Update scope
+# end

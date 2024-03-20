@@ -12,7 +12,9 @@ function test_project()
     test_anonymous_functions()
     test_implicit_assignments()
     test_reflection()
+    #test_fexpr()
     println("--- TESTS PERFORMED ---")
+    
 end
 
 function test_misc_symbols() 
@@ -63,6 +65,10 @@ function test_comparison_operators()
     @assert(meta_eval(:(3 < 2)) == false)
     @assert(meta_eval(:(3 > 2 && 3 < 2)) == false)
     @assert(meta_eval(:(3 > 2 || 3 < 2)) == true)
+    @assert(meta_eval(:(2 == 2)) == true)
+    @assert(meta_eval(:(3 == 2)) == false)
+    @assert(meta_eval(:(2 != 2)) == false)
+    @assert(meta_eval(:(3 != 2)) == true)
     println("<<< COMPARISON OPERATORS TESTED <<<")
 end
 
@@ -137,19 +143,20 @@ function test_implicit_assignments()
     @assert(metajulia_eval(:(let x = 0 
                                 baz = 5
                                 end + baz), scope)  == 8)
-    #@assert(meta_eval(:(let ; baz = 6 end + baz), scope)  == 9)
+    @assert(meta_eval(:(let ; baz = 6 end + baz), scope)  == 9)
 
     println("<<< IMPLICIT ASSIGNMENTS TESTED <<<")   
 end
 
 function test_reflection()
     scope=Dict()
-    println("<<< TEST OF REFLECTION <<<")
+    println(">>> TEST OF REFLECTION >>>")
     @assert(meta_eval(:(:foo), scope) == :foo)
-    #@assert(meta_eval(:(foo + bar), scope) == :(foo + bar))       this is problem right now 
+    @assert(meta_eval(:(:(foo + bar)), scope) == :(:(foo + bar)))
     @assert(meta_eval(:((1 + 2) * $(1 + 2)), scope) == ((1 + 2) * 3))
     println("<<< REFLECTION TESTED <<<")
 end
+
 
 function test_anonymous_functions()
     println("<<< TEST ASSIGNMENT OF ANONYMOUS FUNCTIONS <<<")
@@ -172,4 +179,15 @@ function test_anonymous_functions()
     end)) == 385 skip=true #call inc then 3 times
    
     println("<<< ASSIGNMENT OF ANONYMOUS FUNCTIONS TESTED <<<")
+end
+
+function test_fexpr()
+    scope=Dict()
+    println(">>> TEST OF FEXPR >>>")
+    @assert(meta_eval(:(identity_function(x) = x), scope) !== nothing)
+    @assert(meta_eval(:(identity_function(1+2)), scope)  == 3)
+    @assert(meta_eval(:(identity_fexpr(x) := x), scope) !== nothing)
+    @assert(meta_eval(:(identity_fexpr(1+2)), scope)  == :(:(1 + 2)))
+    @assert(meta_eval(:(identity_fexpr(1+2) == :(1+2)), scope) == true)
+    println("<<< FEXPR TESTED <<<")
 end
