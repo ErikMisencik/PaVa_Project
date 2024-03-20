@@ -258,7 +258,7 @@ function eval_assignment(operator_exp, scope)
 end
 
 meta_eval(:(a = () -> 0))
-
+# test_project()
         
       
 # function eval_let(let_exp_args, outer_scope)
