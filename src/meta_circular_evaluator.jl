@@ -137,23 +137,42 @@ function assign_var(var_name, var_value_exp, scope) # maybe in a later point of 
 end
 
 function eval_let(let_exp_args, outer_scope)
+    
+    let_exp_init = let_exp_args[1]
+    let_exp_body = let_exp_args[2:end]
     local_scope = deepcopy(outer_scope)  # Inherit outer scope
     result = nothing
-    for exp in let_exp_args
-        if exp.head == :(=)
-            var_name = exp.args[1]
-            if is_expression(var_name)
-                # Function Definition
-                eval_let_func_def(var_name, exp.args[2], local_scope)
-            else
-                assign_var(var_name, meta_eval(exp.args[2], local_scope), local_scope)
+
+    if is_assignment(let_exp_init)   # if init only has 1 assignment
+        eval_let_defs(let_exp_init, local_scope)
+    else
+        for exp in let_exp_init.args
+            if (length(exp.args) > 1) && is_assignment(exp)   # if init is not empty
+                eval_let_defs(exp, local_scope)
             end
-        else
-            result = meta_eval(exp, local_scope)  # Use updated local_scope
         end
     end
-    #println("*** Final result of 'let' block: ", result)
+
+    for exp in let_exp_body
+        if length(exp.args) > 1    # if body is not empty expression
+            if is_assignment(exp)
+                eval_let_defs(exp, local_scope)
+            else
+                result = meta_eval(exp, local_scope)  # Use updated local_scope
+            end
+        end
+    end
     return result
+end
+
+function eval_let_defs(exp, scope)
+    var_name = exp.args[1]
+
+    if is_expression(var_name)
+        eval_let_func_def(var_name, exp.args[2], scope)   # Function Definition
+    else
+        assign_var(var_name, meta_eval(exp.args[2], scope), scope)
+    end
 end
 
 function eval_let_func_def(function_decl, function_exp, scope)
@@ -223,6 +242,10 @@ end
 
 function is_quote(quote_node)
     return isa(quote_node, QuoteNode)
+end
+
+function is_assignment(exp)
+    return exp.head == :(=)
 end
 
 function is_symbol(var)
