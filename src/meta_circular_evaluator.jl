@@ -84,7 +84,7 @@ function eval_exp(exp, scope)
 end
 
 function eval_operator(operator_exp, scope)
-    if haskey(default_sym_dict, operator_exp.head)      
+    if haskey(default_sym_dict, operator_exp.head)
         # the dict defines basic operation they can be retrieved by the value 
         return default_sym_dict[operator_exp.head](operator_exp, scope)
     end
@@ -92,7 +92,7 @@ function eval_operator(operator_exp, scope)
 end
 
 # First the scope is checked for a name reference. This allows to override default fun. 
-function eval_call(call, scope)    
+function eval_call(call, scope)
     fun_name = call.args[1]
     if is_fun_defined(fun_name, scope)
         return eval_fun_call(call.args, scope)
@@ -101,7 +101,7 @@ function eval_call(call, scope)
         # the dict defines basic operation they can be retrieved by the value 
         return default_fun_dict[fun_name](call, scope)
     end
-if is_anonymous_call(call)
+    if is_anonymous_call(call)
         anonymous_Fun = Anonymous_Fun(meta_eval(call.args[1].args[1]), call.args[2:end], call.args[1].args[2].args[2])
         return eval_anonymous_call(anonymous_Fun)
     end
@@ -115,7 +115,7 @@ end
 
 function Anonymous_Fun(var_names, var_values, body)
     var_names = typeof(var_names) == Symbol ? [var_names] : var_names
-    inner_scope = Dict(zip(var_names, var_values))   
+    inner_scope = Dict(zip(var_names, var_values))
     return Anonymous_Fun(inner_scope, body)
 end
 
@@ -175,25 +175,25 @@ end
 
 function eval_fun_call(fun_call_exp_args, scope)
     fun_name = fun_call_exp_args[1]
-    param_values = deepcopy(fun_call_exp_args[2:end])       
+    param_values = deepcopy(fun_call_exp_args[2:end])
+
     for i in eachindex(param_values)
-        if is_expression(param_values[i])
-            param_values[i] = meta_eval(param_values[i], scope)
-        end
+        param_values[i] = meta_eval(param_values[i], scope)
     end
 
-        function_object = scope[fun_name]
-        params = function_object.args[1:end-1]
-        body = function_object.args[end]
+    function_object = scope[fun_name]
+    params = function_object.args[1:end-1]
+    body = function_object.args[end]
 
-        # Create a local scope for the function call
-        local_scope = Dict(zip(params, param_values))
+    # Create a local scope for the function call
+    local_scope = Dict(zip(params, param_values))
 
-        # Evaluate the function body in the local scope
-        result = meta_eval(body, local_scope)
 
-        return result
-    end
+    # Evaluate the function body in the local scope
+    result = meta_eval(body, local_scope)
+
+    return result
+end
 
 function is_fun_defined(fun_name, scope)
     return haskey(scope, fun_name) && typeof(scope[fun_name]) == Expr && scope[fun_name].head == :function
@@ -206,7 +206,7 @@ function eval_if(if_exp_args, scope)
     while i < args_length
         if meta_eval(if_exp_args[i], scope) # if_exp_args[i] is the boolean expression
             return meta_eval(if_exp_args[i + 1], scope) # if_exp_args[i + 1] is the value to return
-        else 
+        else
             i += 2
         end
     end
