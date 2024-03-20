@@ -150,7 +150,7 @@ function eval_let(let_exp_args, outer_scope)
             var_name = exp.args[1]
             if is_expression(var_name)
                 # Function Definition
-                eval_let_func_def(var_name, exp.args[2], local_scope)
+                assign_fun(var_name, exp.args[2], local_scope)
             else
                 assign_var(var_name, meta_eval(exp.args[2], local_scope), local_scope)
             end
@@ -162,15 +162,20 @@ function eval_let(let_exp_args, outer_scope)
     return result
 end
 
-function eval_let_func_def(function_decl, function_exp, scope)
+struct Fun_Def
+    input_params::Any
+    body::Any
+end
+
+function assign_fun(function_decl, function_exp, scope)
     # Extract function parameters and body
     name = function_decl.args[1]
     params = function_decl.args[2:end]
     body = function_exp.args[end]
 
     params = is_symbol(params) ? (params,) : params     # Put param in tuple if singular one param
-    function_object = Expr(:function, params..., body)  # Create a function object
-    scope[name] = function_object   # Update scope
+    fun_dev = Fun_Def(params, body)
+    scope[name] = fun_dev   # Update scope
 end
 
 struct UserFunction # System does not allow to use the name Function
@@ -183,10 +188,9 @@ function userFunction(fun_call_exp_args, scope)
     param_values = map(x -> meta_eval(x, scope), fun_call_exp_args[2:end])
 
     fun_dev = scope[fun_name]
-    params = fun_dev.args[1:end-1]
-    local_scope = Dict(zip(params, param_values))
+    local_scope = Dict(zip(fun_dev.input_params, param_values))
    
-    body = fun_dev.args[end]
+    body = fun_dev.body
     return UserFunction(body, local_scope)
 end
 
@@ -196,7 +200,7 @@ function eval_fun_call(fun_call_exp_args, scope)
 end
 
 function is_fun_defined(fun_name, scope)
-    return haskey(scope, fun_name) && typeof(scope[fun_name]) == Expr && scope[fun_name].head == :function
+    return haskey(scope, fun_name) && typeof(scope[fun_name]) == Fun_Def
 end
 
 function eval_if(if_exp_args, scope)
@@ -236,10 +240,17 @@ function is_symbol(var)
 end
 
 function eval_assignment(operator_exp, scope)
+
+    if is_expression(operator_exp.args[2])
+        #define_fun(operator_exp, scope)
+    end
+
     # if call is a function definition
-    if is_expression(operator_exp.args[1])
-        return eval_let_func_def(operator_exp.args[1], operator_exp.args[2], scope)
+    if is_expression(operator_exp.args[1]) 
+        return assign_fun(operator_exp.args[1], operator_exp.args[2], scope)
     else
         return assign_var(operator_exp.args[1], operator_exp.args[2], scope)
     end
 end
+
+meta_eval(:(a = () -> 0))
