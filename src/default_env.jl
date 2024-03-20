@@ -4,7 +4,7 @@ default_fun_dict = Dict(
     :- => (call, scope) -> (return reduce(-, map(operand -> meta_eval(operand, scope), call.args[2:end]))),
     :* => (call, scope) -> (return reduce(*, map(operand -> meta_eval(operand, scope), call.args[2:end]))),
     :/ => (call, scope) -> (return reduce(/, map(operand -> meta_eval(operand, scope), call.args[2:end]))),
-    :sum =>(call, scope) -> (return reduce(+, map(operand -> meta_eval(operand, scope), call.args[2:end]))),
+    :sum =>(call, scope) -> (return sum(map(operand -> meta_eval(operand, scope), call.args[2:end]))),
     
 
     #compare operators

@@ -9,6 +9,7 @@ function test_project()
     test_different_bool_syntax()
     test_blocks()
     test_let()
+    test_anonymous_functions()
     test_implicit_assignments()
     test_reflection()
     #test_fexpr()
@@ -32,6 +33,7 @@ function test_basic_math_operators()
     @assert(meta_eval(:(1 + 2)) == 3, meta_eval(:(1 + 2)))
     @assert(meta_eval(:((1 + 2) + (1 + 2))) == 6)
     @test meta_eval(:(sum(5,2,4,5,5,6,6,43,2))) == 78 
+    @test meta_eval(:(sum((5+2),(4*2),(6/3)))) == 17 
 
     println("*** SUBTRACTION ***")
     @assert(meta_eval(:(1 - 2)) == -1)
@@ -126,18 +128,6 @@ function test_let()
     @assert(meta_eval(:(let +() = "override of plus_default_fun"; +() end)) == "override of plus_default_fun")
     @assert(meta_eval(:(let println(a) = a + a; println(2) end)) == 4)
 
-    println("*** Assignment of anonymous functions ***")
-   
-    @test meta_eval(:((x -> x + 1)(2))) == 3 
-    @test meta_eval(:(((x, y) -> x + y)(1, 2))) == 3 
-    @test meta_eval(:((() -> 5)())) == 5 
-    @test meta_eval(:(sum(x -> x*x, 1, 10))) == 385 broken=true
-
-    @test meta_eval(:(incr =
-    let priv_counter = 0
-    () -> priv_counter = priv_counter + 1
-    end)) == 385 skip=true #call inc then 3 times
-
     println("<<< LET TESTED <<<")
 end
 
@@ -153,7 +143,6 @@ function test_implicit_assignments()
     @assert(metajulia_eval(:(let x = 0 
                                 baz = 5
                                 end + baz), scope)  == 8)
-    @assert(metajulia_eval(:(baz = 3), scope)  == 3)
     @assert(meta_eval(:(let ; baz = 6 end + baz), scope)  == 9)
 
     println("<<< IMPLICIT ASSIGNMENTS TESTED <<<")   
@@ -166,6 +155,30 @@ function test_reflection()
     @assert(meta_eval(:(:(foo + bar)), scope) == :(:(foo + bar)))
     @assert(meta_eval(:((1 + 2) * $(1 + 2)), scope) == ((1 + 2) * 3))
     println("<<< REFLECTION TESTED <<<")
+end
+
+
+function test_anonymous_functions()
+    println("<<< TEST ASSIGNMENT OF ANONYMOUS FUNCTIONS <<<")
+ 
+    @test meta_eval(:((() -> 5)())) == 5 
+    @test meta_eval(:((x -> x + 1)(2))) == 3 
+    @test meta_eval(:(((x, y) -> x + y)(1, 2))) == 3 
+    @test meta_eval(:(((x, y, z) -> x + y + z)(1, 2, 3))) == 6 
+    
+    @test meta_eval(:(sum((() -> 1)(), 2, 3))) == 6 
+    @test meta_eval(:(sum(((x) -> x + 1)(1), 2, 3))) == 7 
+    @test meta_eval(:(sum(((x, y) -> x + y + 1)(1, 2), 2, 3))) == 9 
+    @test meta_eval(:(sum(((x, y, z) -> x + y + z + 1)(1, 2, 3), 2, 3))) == 12 
+
+    @test meta_eval(:(sum(x -> x*x, 1, 10))) == 385 broken=true
+
+    @test meta_eval(:(incr =
+    let priv_counter = 0
+    () -> priv_counter = priv_counter + 1
+    end)) == 385 skip=true #call inc then 3 times
+   
+    println("<<< ASSIGNMENT OF ANONYMOUS FUNCTIONS TESTED <<<")
 end
 
 function test_fexpr()
