@@ -9,7 +9,9 @@ default_fun_dict = Dict(
 
     #compare operators
     :< => (call, scope) -> (return meta_eval(call.args[2], scope) < meta_eval(call.args[3], scope)),
+    :(<=) => (call, scope) -> (return meta_eval(call.args[2], scope) <= meta_eval(call.args[3], scope)),
     :> => (call, scope) -> (return meta_eval(call.args[2], scope) > meta_eval(call.args[3], scope)),
+    :(>=) => (call, scope) -> (return meta_eval(call.args[2], scope) >= meta_eval(call.args[3], scope)),
     Symbol("==") => (call, scope) -> (return meta_eval(call.args[2], scope) == meta_eval(call.args[3], scope)),
     Symbol("!=") => (call, scope) -> (return meta_eval(call.args[2], scope) != meta_eval(call.args[3], scope)),
     

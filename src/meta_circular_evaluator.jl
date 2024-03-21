@@ -74,8 +74,7 @@ end
 
 function eval_exp(exp, scope)
     if exp.head == :quote
-        # Handle quoted expressions
-        eval_quote(exp, scope)
+        eval_quote(exp, scope)  # Handle quoted expressions
     elseif exp.head != :call
         eval_operator(exp, scope)
     else
@@ -191,7 +190,7 @@ struct Fun_Def
     input_params::Any
     body::Any
 end   
-         
+
 function assign_fun(function_decl, function_exp, scope)
     # Extract function parameters and body
     name = function_decl.args[1]
@@ -201,7 +200,7 @@ function assign_fun(function_decl, function_exp, scope)
     params = is_symbol(params) ? (params,) : params     # Put param in tuple if singular one param
     fun_dev = Fun_Def(params, body)
     scope[name] = fun_dev   # Update scope
-end
+end 
 
 struct UserFunction # System does not allow to use the name Function
     body::Any
@@ -214,14 +213,15 @@ function userFunction(fun_call_exp_args, scope)
 
     fun_dev = scope[fun_name]
     local_scope = Dict(zip(fun_dev.input_params, param_values))
-   
     body = fun_dev.body
     return UserFunction(body, local_scope)
 end
 
 function eval_fun_call(fun_call_exp_args, scope)
     fun = userFunction(fun_call_exp_args, scope)
-    return meta_eval(fun.body, fun.local_scope)
+    fun_scope = merge(scope, fun.local_scope)
+    result = meta_eval(fun.body, fun_scope)
+    return result
 end
 
 function is_fun_defined(fun_name, scope)
@@ -318,57 +318,3 @@ function eval_fexpr_call(fun_call_exp_args, scope)
 end
 
 test_project()
-
-# meta_eval(:(a = () -> 0))
-
-
-      
-# function eval_let(let_exp_args, outer_scope)
-    
-#     let_exp_init = let_exp_args[1]
-#     let_exp_body = let_exp_args[2:end]
-#     local_scope = deepcopy(outer_scope)  # Inherit outer scope
-#     result = nothing
-
-#     if is_assignment(let_exp_init)   # if init only has 1 assignment
-#         eval_let_defs(let_exp_init, local_scope)
-#     else
-#         for exp in let_exp_init.args
-#             if (length(exp.args) > 1) && is_assignment(exp)   # if init is not empty
-#                 eval_let_defs(exp, local_scope)
-#             end
-#         end
-#     end
-
-#     for exp in let_exp_body
-#         if length(exp.args) > 1    # if body is not empty expression
-#             if is_assignment(exp)
-#                 eval_let_defs(exp, local_scope)
-#             else
-#                 result = meta_eval(exp, local_scope)  # Use updated local_scope
-#             end
-#         end
-#     end
-#     return result
-# end
-
-# function eval_let_defs(exp, scope)
-#     var_name = exp.args[1]
-
-#     if is_expression(var_name)
-#         eval_let_func_def(var_name, exp.args[2], scope)   # Function Definition
-#     else
-#         assign_var(var_name, meta_eval(exp.args[2], scope), scope)
-#     end
-# end
-      
-# function eval_let_func_def(function_decl, function_exp, scope)
-#     # Extract function parameters and body
-#     name = function_decl.args[1]
-    # params = function_decl.args[2:end]
-#     body = function_exp.args[end]
-
-#     params = is_symbol(params) ? (params,) : params     # Put param in tuple if singular one param
-#     function_object = Expr(:function, params..., body)  # Create a function object
-#     scope[name] = function_object   # Update scope
-# end

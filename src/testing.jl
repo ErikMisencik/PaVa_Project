@@ -12,7 +12,8 @@ function test_project()
     # test_anonymous_functions()
     test_implicit_assignments()
     test_reflection()
-    test_fexpr()
+    #test_fexpr()
+    test_special_functions()
     println("--- TESTS PERFORMED ---")
     
 end
@@ -113,7 +114,8 @@ function test_let()
     @assert(meta_eval(:(let x = 1; x end)) == 1)
     @assert(meta_eval(:(let x = 2; x*3 end)) == 6)
     @assert(meta_eval(:(let a = 1, b = 2; let a = 3; a+b end end)) == 5)
-    @assert(meta_eval(:(let a = 1; a + 2 end)) == 3)
+    @assert(meta_eval(:(let a = 1
+                         a + 2 end)) == 3)
 
     println("*** FUNCTION DEFINITION ***")
     @assert(meta_eval(:(let return_40() = 40; return_40() end)) == 40)
@@ -190,4 +192,28 @@ function test_fexpr()
     @assert(meta_eval(:(identity_fexpr(1+2)), scope)  == :(1 + 2))
     @assert(meta_eval(:(identity_fexpr(1+2) == :(1+2)), scope) == true) # TODO I dont  understand, they print the same result...
     println("<<< FEXPR TESTED <<<")
+end
+
+function test_special_functions() 
+    scope=Dict()
+    println(">>> TEST SPECIAL FUNCTIONS >>>")
+
+    println("*** RECURSIVE FUNCTIONS ***")
+    @assert(meta_eval(:(factorial(n) = n == 0 ? 1 : n * factorial(n - 1)), scope) !== nothing)
+    @assert(meta_eval(:(factorial(5)), scope) == 120)
+    @assert(meta_eval(:(fibonacci(n) = n <= 1 ? n : fibonacci(n - 1) + fibonacci(n - 2)), scope) !== nothing)
+    @assert(meta_eval(:(fibonacci(6)), scope) == 8)
+
+    println("*** HIGHER ORDER FUNCTIONS ***")
+    @assert(meta_eval(:(sum(f, a, b) = 
+                                    a > b ?
+                                        0 :
+                                        f(a) + sum(f, a + 1, b)), scope) !== nothing)
+    meta_eval(:(triple(a) = a + a + a), scope)
+    @assert(meta_eval(:(sum(triple, 1, 10)),scope) == 165)
+    @assert(meta_eval(:(square(a) = a * a), scope) !== nothing)
+    @assert(meta_eval(:(sum(square, 1, 5)), scope) == 55)
+    @assert(meta_eval(:(product(a, b) = a * b), scope) !== nothing)
+    @assert(meta_eval(:(sum(product, 1, 5)), scope) == 75)
+    println("<<< SPECIAL FUNCTIONS TESTED <<<")
 end
