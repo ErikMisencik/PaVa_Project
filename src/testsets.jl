@@ -61,3 +61,40 @@ end
     @test meta_eval(:(let +() = "override of plus_default_fun"; +() end)) == "override of plus_default_fun"
     @test meta_eval(:(let println(a) = a + a; println(2) end)) == 4
 end
+
+@testset "Define Functions" begin
+
+    @testset "Define Functions using let" begin
+        @test meta_eval(:(let return_40() = 40; return_40() end)) == 40
+        @test meta_eval(:(let x(y) = y+1; x(1) end)) == 2
+        @test meta_eval(:(let x(y,z) = y+z; x(1,2) end)) == 3
+        @test meta_eval(:(let x = 1, y(x) = x+1; y(x+1) end)) == 3
+        @test meta_eval(:(let multiply_three(x, y, z) = x * y * z; multiply_three(1, 2 ,3) end)) == 6
+        @test meta_eval(:(let multiply_three(x, y, z) = x * y * z; multiply_three(1 + 2 ,2 +2 ,3 + 4) end)) == 84
+        @test_throws UndefVarError my_function(-1)
+    end
+
+    @testset "Define Functions" begin
+        my_scope = Dict()
+        meta_eval(:(return_40() = 40), my_scope)
+        @test meta_eval(:(return_40()), my_scope) == 40
+
+        meta_eval(:(x(y) = y+1), my_scope)
+        @test meta_eval(:(x(1)), my_scope) == 2
+
+        meta_eval(:(x(y,z) = y+z), my_scope)
+        @test meta_eval(:(x(1,2)), my_scope) == 3
+
+        meta_eval(:(x = 1), my_scope)
+        meta_eval(:(y(x) = x+1), my_scope)
+        @test meta_eval(:(y(x+1)), my_scope) == 3
+
+        meta_eval(:(multiply_three(x, y, z) = x * y * z), my_scope)
+        @test meta_eval(:(multiply_three(1, 2 ,3)), my_scope) == 6
+        @test meta_eval(:(multiply_three(1 + 2 ,2 +2 ,3 + 4)), my_scope) == 84
+    end
+
+end
+
+
+
