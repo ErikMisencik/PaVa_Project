@@ -16,7 +16,7 @@ default_fun_dict = Dict(
     Symbol("!=") => (call, scope) -> (return meta_eval(call.args[2], scope) != meta_eval(call.args[3], scope)),
     
     #misc
-    :println => (call, scope) -> (return println(call.args[2]))
+    :println => (call, scope) -> (return println(meta_eval(call.args[2], scope)))
 )
 
 default_sym_dict = Dict(
