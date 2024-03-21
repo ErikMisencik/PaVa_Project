@@ -369,7 +369,6 @@ function is_macro_expansion(exp, scope)
     return false
 end
 
-
 function replace_expr(expr, to_replace, replacement)
     if expr == to_replace
         return replacement
