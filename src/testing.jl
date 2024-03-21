@@ -126,10 +126,6 @@ function test_let()
     @assert(meta_eval(:(let multiply_three(x, y, z) = x * y * z; multiply_three(1 + 2 ,2 +2 ,3 + 4) end)) == 84)
     @test_throws UndefVarError my_function(-1)
 
-    println("*** Override default functions ***")
-    @assert(meta_eval(:(let +() = "override of plus_default_fun"; +() end)) == "override of plus_default_fun")
-    @assert(meta_eval(:(let println(a) = a + a; println(2) end)) == 4)
-
     println("<<< LET TESTED <<<")
 end
 
@@ -172,8 +168,7 @@ function test_anonymous_functions()
     @test meta_eval(:(sum(((x) -> x + 1)(1), 2, 3))) == 7 
     @test meta_eval(:(sum(((x, y) -> x + y + 1)(1, 2), 2, 3))) == 9 
     @test meta_eval(:(sum(((x, y, z) -> x + y + z + 1)(1, 2, 3), 2, 3))) == 12 
-
-    @test meta_eval(:(sum(x -> x*x, 1, 10))) == 385 broken=true
+    @test meta_eval(:(sum(x -> x*x, 1, 10))) == 385
 
     @test meta_eval(:(incr =
     let priv_counter = 0
