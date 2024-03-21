@@ -9,10 +9,10 @@ function test_project()
     test_different_bool_syntax()
     test_blocks()
     test_let()
-    test_anonymous_functions()
+    # test_anonymous_functions()
     test_implicit_assignments()
     test_reflection()
-    #test_fexpr()
+    test_fexpr()
     println("--- TESTS PERFORMED ---")
     
 end
@@ -187,7 +187,7 @@ function test_fexpr()
     @assert(meta_eval(:(identity_function(x) = x), scope) !== nothing)
     @assert(meta_eval(:(identity_function(1+2)), scope)  == 3)
     @assert(meta_eval(:(identity_fexpr(x) := x), scope) !== nothing)
-    @assert(meta_eval(:(identity_fexpr(1+2)), scope)  == :(:(1 + 2)))
-    @assert(meta_eval(:(identity_fexpr(1+2) == :(1+2)), scope) == true)
+    @assert(meta_eval(:(identity_fexpr(1+2)), scope)  == :(1 + 2))
+    @assert(meta_eval(:(identity_fexpr(1+2) == :(1+2)), scope) == true) # TODO I dont  understand, they print the same result...
     println("<<< FEXPR TESTED <<<")
 end

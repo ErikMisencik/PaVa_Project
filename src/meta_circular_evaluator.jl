@@ -101,6 +101,12 @@ function eval_call(call, scope)
         # the dict defines basic operation they can be retrieved by the value 
         return default_fun_dict[fun_name](call, scope)
     end
+    if typeof(scope[call.args[1]]) == fexpr
+        return eval_fexpr_call(call.args, scope)
+    end
+    if haskey(scope,call.args[1])        
+        eval_fun_call(call.args, scope)    
+    end
     if is_anonymous_call(call)
         anonymous_Fun = Anonymous_Fun(meta_eval(call.args[1].args[1]), call.args[2:end], call.args[1].args[2].args[2])
         return eval_anonymous_call(anonymous_Fun)
@@ -257,9 +263,46 @@ function eval_assignment(operator_exp, scope)
     end
 end
 
-meta_eval(:(a = () -> 0))
-# test_project()
-        
+struct fexpr
+    params
+    body
+end
+
+function eval_fexpr_def(function_decl, scope)
+    # Extract function parameters and body
+    name = function_decl.args[1].args[1]
+    params = function_decl.args[1].args[2:end]
+    body = function_decl.args[end]
+
+    function_object = fexpr( params, body)  # Create a function object
+    scope[name] = function_object   # Update scope
+
+end
+	
+function eval_fexpr_call(fun_call_exp_args, scope)
+    fun_name = fun_call_exp_args[1]
+    param_values = deepcopy(fun_call_exp_args[2:end])       
+    for i in eachindex(param_values)
+        if is_expression(param_values[i])
+            param_values[i] = param_values[i]
+        end
+    end
+    function_object = scope[fun_name]
+    params = function_object.params
+    body = function_object.body
+    # Create a local scope for the function call
+    local_scope = Dict(zip(params, param_values))
+    # Evaluate the function body in the local scope
+    result = meta_eval(body, local_scope)
+
+    return result
+end
+
+test_project()
+
+# meta_eval(:(a = () -> 0))
+
+
       
 # function eval_let(let_exp_args, outer_scope)
     
@@ -303,7 +346,7 @@ meta_eval(:(a = () -> 0))
 # function eval_let_func_def(function_decl, function_exp, scope)
 #     # Extract function parameters and body
 #     name = function_decl.args[1]
-#     params = function_decl.args[2:end]
+    # params = function_decl.args[2:end]
 #     body = function_exp.args[end]
 
 #     params = is_symbol(params) ? (params,) : params     # Put param in tuple if singular one param
