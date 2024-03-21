@@ -100,15 +100,15 @@ function eval_call(call, scope)
         # the dict defines basic operation they can be retrieved by the value 
         return default_fun_dict[fun_name](call, scope)
     end
+    if is_anonymous_call(call)
+        anonymous_Fun = Anonymous_Fun(meta_eval(call.args[1].args[1]), call.args[2:end], call.args[1].args[2].args[2])
+        return eval_anonymous_call(anonymous_Fun)
+    end
     if typeof(scope[call.args[1]]) == fexpr
         return eval_fexpr_call(call.args, scope)
     end
     if haskey(scope,call.args[1])        
         eval_fun_call(call.args, scope)    
-    end
-    if is_anonymous_call(call)
-        anonymous_Fun = Anonymous_Fun(meta_eval(call.args[1].args[1]), call.args[2:end], call.args[1].args[2].args[2])
-        return eval_anonymous_call(anonymous_Fun)
     end
     throw(UndefVarError("Function '$fun_name' not defined."))
 end
@@ -316,5 +316,3 @@ function eval_fexpr_call(fun_call_exp_args, scope)
 
     return result
 end
-
-test_project()
