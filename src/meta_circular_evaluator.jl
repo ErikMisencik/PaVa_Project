@@ -339,7 +339,7 @@ function eval_fexpr_call(fun_call_exp_args, scope)
     return result
 end
 
-
+ ############### START ADDED FOR MACRO ##############
 function define_macro(exp, scope)
     macro_name = exp.args[1].args[1]  # Extracting the macro name
     macro_body = exp.args[2]  # Extracting the macro body
@@ -380,3 +380,4 @@ function replace_expr(expr, to_replace, replacement)
         return expr
     end
 end
+ ############### END OF ADDED FOR MACRO ##############
