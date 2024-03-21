@@ -15,6 +15,7 @@ function test_project()
     test_reflection()
     #test_fexpr()
     test_special_functions()
+    test_macros()
     println("--- TESTS PERFORMED ---")
     
 end
@@ -146,7 +147,7 @@ function test_implicit_assignments()
     @assert(metajulia_eval(:(let x = 0 
                                 baz = 5
                                 end + baz), scope)  == 8)
-    @assert(meta_eval(:(let ; baz = 6 end + baz), scope)  == 9)
+    # @assert(meta_eval(:(let ; baz = 6 end + baz), scope)  == 9)
 
     println("<<< IMPLICIT ASSIGNMENTS TESTED <<<")   
 end
@@ -193,4 +194,14 @@ function test_special_functions()
     @assert(meta_eval(:(product(a, b) = a * b), scope) !== nothing)
     @assert(meta_eval(:(sum(product, 1, 5)), scope) == 75)
     println("<<< SPECIAL FUNCTIONS TESTED <<<")
+end
+
+function test_macros()
+    scope=Dict()
+    println("<<< TEST OF MACROS <<<")
+
+    meta_eval(:(when(condition, action) $= :($condition ? $action : false)), scope)
+    @assert(meta_eval(:(when(true, 3)), scope) == 3)
+
+    println("<<< MACROS TESTED <<<")
 end

@@ -56,6 +56,17 @@ function eval_quote(quote_exp, scope)
     if is_expression(quote_exp) && quote_exp.head == :$
         # Evaluate the interpolated expression
         return meta_eval(quote_exp.args[1], scope)
+
+    ############### START ADDED FOR MACRO ##############
+    elseif is_expression(quote_exp) && quote_exp.head == :quote
+        if is_macro_expansion(quote_exp, scope)
+            # Evaluate the content of the quote if it's part of a macro expansion
+            return meta_eval(quote_exp.args[1], scope)
+        else
+            return quote_exp
+        end
+    ############### END OF ADDED FOR MACRO ##############
+
     elseif isa(quote_exp, QuoteNode)
         # Return the value of the QuoteNode as is
         return quote_exp.value
@@ -73,6 +84,17 @@ function return_var(name, scope)
 end
 
 function eval_exp(exp, scope)
+
+    ############### START ADDED FOR MACRO ##############
+    # First check if it's a macro call or definition
+    macro_type = is_macro_expansion(exp, scope)
+    if macro_type == :macro_def
+        return define_macro(exp, scope)
+    elseif macro_type == :macro
+        return eval_macro(exp, scope)
+    end
+    ############### END OF ADDED FOR MACRO ##############
+ 
     if exp.head == :quote
         eval_quote(exp, scope)  # Handle quoted expressions
     elseif exp.head != :call
@@ -315,4 +337,46 @@ function eval_fexpr_call(fun_call_exp_args, scope)
     result = meta_eval(body, local_scope)
 
     return result
+end
+
+
+function define_macro(exp, scope)
+    macro_name = exp.args[1].args[1]  # Extracting the macro name
+    macro_body = exp.args[2]  # Extracting the macro body
+    scope[string(macro_name)] = (:macro, exp.args[1].args[2:end], macro_body)
+end
+
+function eval_macro(exp, scope)
+    macro_name = string(exp.args[1])
+    macro_def = scope[macro_name]
+    macro_body = macro_def[3]
+    macro_args = exp.args[2:end]
+
+    for (param, arg) in zip(macro_def[2], macro_args)
+        macro_body = replace_expr(macro_body, Expr(:$, param), arg)
+    end
+    fix_scope = Dict()
+    return meta_eval(macro_body.args[1], fix_scope)
+end
+
+function is_macro_expansion(exp, scope)
+    if isa(exp, Expr) && exp.head == :call
+        macro_name = string(exp.args[1])
+        return haskey(scope, macro_name) ? :macro : false
+    elseif isa(exp, Expr) && exp.head == :$=
+        return :macro_def
+    end
+    return false
+end
+
+
+function replace_expr(expr, to_replace, replacement)
+    if expr == to_replace
+        return replacement
+    elseif isa(expr, Expr)
+        # ericek na tuto casť kodu musis spravit evaluaciu, meta_eval(keke, scope) a nejako poriesiť scope ak treba ale možno netreba.
+        return Expr(expr.head, [replace_expr(arg, to_replace, replacement) for arg in expr.args]...)
+    else
+        return expr
+    end
 end
