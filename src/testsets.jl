@@ -107,9 +107,11 @@ end
     @test meta_eval(:(sum(((x) -> x + 1)(1), 2, 3))) == 7
     @test meta_eval(:(sum(((x, y) -> x + y + 1)(1, 2), 2, 3))) == 9
     @test meta_eval(:(sum(((x, y, z) -> x + y + z + 1)(1, 2, 3), 2, 3))) == 12
-    @test meta_eval(:(sum(x -> x * x, 1, 10))) == 385 skip=true
-
+   
     my_scope = Dict()
+    meta_eval(:(sum(f, a, b) = a > b ? 0 : f(a) + sum(f, a + 1, b)), my_scope)
+    @test meta_eval(:(sum(x -> x * x, 1, 10)), my_scope) == 385 skip=true
+  
     @test meta_eval(:(incr = let priv_counter = 0
         () -> priv_counter = priv_counter + 1
     end), my_scope) skip=true
