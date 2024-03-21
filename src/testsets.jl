@@ -29,6 +29,17 @@ include("testing.jl")
         @test meta_eval(:(call(add(one, three))), my_scope) == 4
     end
 
+    @testset "Return functions" begin
+        my_scope = Dict()
+        meta_eval(:(function1(x) = x + 1), my_scope)
+        meta_eval(:(function2(x) = x * 2), my_scope)
+        meta_eval(:(choose_function(input) = input == 1 ? function1 : function2), my_scope)
+        meta_eval(:(a = choose_function(1)), my_scope)
+        @test meta_eval(:((a(3))), my_scope) == 4
+        meta_eval(:(a = choose_function(2)), my_scope)
+        @test meta_eval(:(a(3)), my_scope) == 6  
+    end
+
     @testset "Function from project description" begin
         meta_eval(:(triple(a) = a + a + a), my_scope)
         meta_eval(:(sum(f, a, b) = a > b ? 0 : f(a) + sum(f, a + 1, b)), my_scope)
