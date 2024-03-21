@@ -7,6 +7,7 @@ function test_project()
     test_basic_math_operators()
     test_comparison_operators()
     test_different_bool_syntax()
+    test_short_circuit_evaluation()
     test_blocks()
     test_let()
     # test_anonymous_functions()
@@ -95,6 +96,20 @@ function test_different_bool_syntax()
     @assert(meta_eval(:( if 2 < 6 4 else 1 end)) == 4)
 
     println("<<< DIFFERENT BOOL SYNTAX TESTED <<<")
+end
+
+function test_short_circuit_evaluation()
+    scope=Dict()
+    println(">>> TEST SHORT-CIRCUIT EVALUATION >>>")
+    @assert(meta_eval(:(quotient_or_false(a, b) = !(b == 0) && a/b), scope) !== nothing)
+    @assert(meta_eval(:(quotient_or_false(6, 2)), scope) == 3.0)
+    @assert(meta_eval(:(quotient_or_false(6, 0)), scope) == false)
+    @assert(meta_eval(:(compare_values(x, y)= x == y), scope) !== nothing)
+    @assert(meta_eval(:(2 < 1 || compare_values(5, 5)),scope) == true)
+    @assert(meta_eval(:(2 < 1 || compare_values(5, 4)),scope) == false)
+    @assert(meta_eval(:(5 > 1 && compare_values(5, 5)),scope) == true)
+    @assert(meta_eval(:(5 > 1 && compare_values(5, 4)),scope) == false)
+    println("<<< SHORT-CIRCUIT EVALUATION TESTED <<<")
 end
 
 function test_blocks()
