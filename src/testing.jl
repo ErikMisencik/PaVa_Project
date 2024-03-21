@@ -143,7 +143,7 @@ function test_implicit_assignments()
     @assert(metajulia_eval(:(let x = 0 
                                 baz = 5
                                 end + baz), scope)  == 8)
-    # @assert(meta_eval(:(let ; baz = 6 end + baz), scope)  == 9)
+    @assert(meta_eval(:(let ; baz = 6 end + baz), scope)  == 9)
 
     println("<<< IMPLICIT ASSIGNMENTS TESTED <<<")   
 end
