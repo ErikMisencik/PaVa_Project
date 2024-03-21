@@ -160,29 +160,6 @@ function test_reflection()
     println("<<< REFLECTION TESTED <<<")
 end
 
-
-function test_anonymous_functions()
-    println("<<< TEST ASSIGNMENT OF ANONYMOUS FUNCTIONS <<<")
- 
-    @test meta_eval(:((() -> 5)())) == 5 
-    @test meta_eval(:((x -> x + 1)(2))) == 3 
-    @test meta_eval(:(((x, y) -> x + y)(1, 2))) == 3 
-    @test meta_eval(:(((x, y, z) -> x + y + z)(1, 2, 3))) == 6 
-    
-    @test meta_eval(:(sum((() -> 1)(), 2, 3))) == 6 
-    @test meta_eval(:(sum(((x) -> x + 1)(1), 2, 3))) == 7 
-    @test meta_eval(:(sum(((x, y) -> x + y + 1)(1, 2), 2, 3))) == 9 
-    @test meta_eval(:(sum(((x, y, z) -> x + y + z + 1)(1, 2, 3), 2, 3))) == 12 
-    @test meta_eval(:(sum(x -> x*x, 1, 10))) == 385
-
-    @test meta_eval(:(incr =
-    let priv_counter = 0
-    () -> priv_counter = priv_counter + 1
-    end)) == 385 skip=true #call inc then 3 times
-   
-    println("<<< ASSIGNMENT OF ANONYMOUS FUNCTIONS TESTED <<<")
-end
-
 function test_fexpr()
     scope=Dict()
     println(">>> TEST OF FEXPR >>>")

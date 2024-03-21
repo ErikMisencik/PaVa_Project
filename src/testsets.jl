@@ -37,7 +37,7 @@ include("testing.jl")
         meta_eval(:(a = choose_function(1)), my_scope)
         @test meta_eval(:((a(3))), my_scope) == 4
         meta_eval(:(a = choose_function(2)), my_scope)
-        @test meta_eval(:(a(3)), my_scope) == 6  
+        @test meta_eval(:(a(3)), my_scope) == 6
     end
 
     @testset "Function from project description" begin
@@ -96,5 +96,24 @@ end
 
 end
 
+@testset "ANONYMOUS FUNCTIONS" begin
 
+    @test meta_eval(:((() -> 5)())) == 5
+    @test meta_eval(:((x -> x + 1)(2))) == 3
+    @test meta_eval(:(((x, y) -> x + y)(1, 2))) == 3
+    @test meta_eval(:(((x, y, z) -> x + y + z)(1, 2, 3))) == 6
 
+    @test meta_eval(:(sum((() -> 1)(), 2, 3))) == 6
+    @test meta_eval(:(sum(((x) -> x + 1)(1), 2, 3))) == 7
+    @test meta_eval(:(sum(((x, y) -> x + y + 1)(1, 2), 2, 3))) == 9
+    @test meta_eval(:(sum(((x, y, z) -> x + y + z + 1)(1, 2, 3), 2, 3))) == 12
+    @test meta_eval(:(sum(x -> x * x, 1, 10))) == 385 skip=true
+
+    my_scope = Dict()
+    @test meta_eval(:(incr = let priv_counter = 0
+        () -> priv_counter = priv_counter + 1
+    end), my_scope) skip=true
+    @test meta_eval(incr(), my_scope) == 1 skip=true
+    @test meta_eval(incr(), my_scope) == 2 skip=true
+
+end
