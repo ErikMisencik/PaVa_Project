@@ -1,5 +1,6 @@
 include("testing.jl")
-include("default_env.jl")
+include("default_fun.jl")
+include("default_sym.jl")
 
 debug = false
 
