@@ -106,6 +106,9 @@ function eval_exp(exp, scope)
 end
 
 function eval_operator(operator_exp, scope)
+    
+    println(operator_exp.head)
+    
     if haskey(default_sym_dict, operator_exp.head)
         # the dict defines basic operation they can be retrieved by the value 
         return default_sym_dict[operator_exp.head](operator_exp, scope)
@@ -117,7 +120,7 @@ end
 function eval_call(call, scope)
     fun_name = call.args[1]
     if is_fun_defined(fun_name, scope)
-        return eval_fun_call(call.args, scope)
+        return eval_fun_call(call, scope)
     end
     if is_default_fun_defined(fun_name)
         # the dict defines basic operation they can be retrieved by the value 
@@ -131,7 +134,7 @@ function eval_call(call, scope)
         return eval_fexpr_call(call.args, scope)
     end
     if haskey(scope,call.args[1])        
-        eval_fun_call(call.args, scope)    
+        eval_fun_call(call, scope)    
     end
     throw(UndefVarError("Function '$fun_name' not defined."))
 end
@@ -232,16 +235,41 @@ end
 
 function userFunction(fun_call_exp_args, scope)
     fun_name = fun_call_exp_args[1]
+
+   
+    dump(fun_call_exp_args[2])
+    println("type")
+    println(typeof(fun_call_exp_args[2]))
+    println("eval")
+    a = (metajulia_eval(fun_call_exp_args[2], scope))
+    println(a)
+    println(typeof(a)) 
+
+
     param_values = map(x -> metajulia_eval(x, scope), fun_call_exp_args[2:end])
 
+
+
     fun_dev = scope[fun_name]
+
+    println("Test")
+    println(fun_dev) 
+
     local_scope = Dict(zip(fun_dev.input_params, param_values))
     body = fun_dev.body
     return UserFunction(body, local_scope)
 end
 
-function eval_fun_call(fun_call_exp_args, scope)
-    fun = userFunction(fun_call_exp_args, scope)
+function eval_fun_call(fun_call_exp, scope)
+    
+
+    #if fun_call_exp.args[2].head == :->
+    #    println("anon")
+    #end
+    #dump(fun_call_exp)
+    
+    
+    fun = userFunction(fun_call_exp.args, scope)
     fun_scope = merge(scope, fun.local_scope)
     return metajulia_eval(fun.body, fun_scope)
 end
@@ -380,3 +408,13 @@ function replace_expr(expr, to_replace, replacement)
     end
 end
  ############### END OF ADDED FOR MACRO ##############
+
+ my_scope = Dict()
+ metajulia_eval(:(fun(fun_exp, param) = fun_exp(param)), my_scope)
+ metajulia_eval(:(fun(x -> x + x, 3)), my_scope)
+
+
+ #metajulia_eval(:(x->begin
+ #       x + x
+ #   end))
+
