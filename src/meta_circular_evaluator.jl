@@ -243,8 +243,7 @@ end
 function eval_fun_call(fun_call_exp_args, scope)
     fun = userFunction(fun_call_exp_args, scope)
     fun_scope = merge(scope, fun.local_scope)
-    result = metajulia_eval(fun.body, fun_scope)
-    return result
+    return metajulia_eval(fun.body, fun_scope)
 end
 
 function is_fun_defined(fun_name, scope)
