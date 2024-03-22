@@ -16,12 +16,12 @@ function metajulia_repl()
                 break
             end
         end
-        println(meta_eval(result[1], scope))
+        println(metajulia_eval(result[1], scope))
     end
 end
 
 function metajulia_eval(exp, scope)
-    return meta_eval(exp, scope)
+    return metajulia_eval(exp, scope)
 end
 
 """
@@ -31,10 +31,10 @@ this with our meta evaluator.
 function meta_eval_string(input_string)
     #cast string to expression
     expr = Meta.parse(input_string)
-    meta_eval(expr)
+    metajulia_eval(expr)
 end
 
-function meta_eval(exp, scope=Dict())
+function metajulia_eval(exp, scope=Dict())
     if (debug)
         println(typeof(exp))
         println(exp)
@@ -55,13 +55,13 @@ function eval_quote(quote_exp, scope)
 
     if is_expression(quote_exp) && quote_exp.head == :$
         # Evaluate the interpolated expression
-        return meta_eval(quote_exp.args[1], scope)
+        return metajulia_eval(quote_exp.args[1], scope)
 
     ############### START ADDED FOR MACRO ##############
     elseif is_expression(quote_exp) && quote_exp.head == :quote
         if is_macro_expansion(quote_exp, scope)
             # Evaluate the content of the quote if it's part of a macro expansion
-            return meta_eval(quote_exp.args[1], scope)
+            return metajulia_eval(quote_exp.args[1], scope)
         else
             return quote_exp
         end
@@ -123,7 +123,7 @@ function eval_call(call, scope)
         return default_fun_dict[fun_name](call, scope)
     end
     if is_anonymous_call(call)
-        anonymous_Fun = Anonymous_Fun(meta_eval(call.args[1].args[1]), call.args[2:end], call.args[1].args[2].args[2])
+        anonymous_Fun = Anonymous_Fun(metajulia_eval(call.args[1].args[1]), call.args[2:end], call.args[1].args[2].args[2])
         return eval_anonymous_call(anonymous_Fun)
     end
     if typeof(scope[call.args[1]]) == fexpr
@@ -147,7 +147,7 @@ function Anonymous_Fun(var_names, var_values, body)
 end
 
 function eval_anonymous_call(anonymous_Fun)
-    return(meta_eval(anonymous_Fun.body, anonymous_Fun.inner_scope))
+    return(metajulia_eval(anonymous_Fun.body, anonymous_Fun.inner_scope))
 end
 
 function is_anonymous_call(call)
@@ -164,7 +164,7 @@ function is_default_fun_defined(fun_name)
 end
 
 function assign_var(var_name, var_value_exp, scope) # maybe in a later point of the project the var_name should also be evaluated
-    var_value = meta_eval(var_value_exp, scope)
+    var_value = metajulia_eval(var_value_exp, scope)
     scope[var_name] = var_value # Update scope
     return var_value
 end
@@ -191,7 +191,7 @@ function eval_let(let_exp_args, outer_scope)
             if is_assignment(exp)
                 eval_let_defs(exp, local_scope)
             else
-                result = meta_eval(exp, local_scope)  # Use updated local_scope
+                result = metajulia_eval(exp, local_scope)  # Use updated local_scope
             end
         end
     end
@@ -204,7 +204,7 @@ function eval_let_defs(exp, scope)
     if is_expression(var_name)
         assign_fun(var_name, exp.args[2], scope)   # Function Definition
     else
-        assign_var(var_name, meta_eval(exp.args[2], scope), scope)
+        assign_var(var_name, metajulia_eval(exp.args[2], scope), scope)
     end
 end
 
@@ -231,7 +231,7 @@ end
 
 function userFunction(fun_call_exp_args, scope)
     fun_name = fun_call_exp_args[1]
-    param_values = map(x -> meta_eval(x, scope), fun_call_exp_args[2:end])
+    param_values = map(x -> metajulia_eval(x, scope), fun_call_exp_args[2:end])
 
     fun_dev = scope[fun_name]
     local_scope = Dict(zip(fun_dev.input_params, param_values))
@@ -242,7 +242,7 @@ end
 function eval_fun_call(fun_call_exp_args, scope)
     fun = userFunction(fun_call_exp_args, scope)
     fun_scope = merge(scope, fun.local_scope)
-    result = meta_eval(fun.body, fun_scope)
+    result = metajulia_eval(fun.body, fun_scope)
     return result
 end
 
@@ -255,23 +255,23 @@ function eval_if(if_exp_args, scope)
     i = 1
     # if_exp_args[] is the part of the if exp that decides if args[2] or [3] should be returned
     while i < args_length
-        if meta_eval(if_exp_args[i], scope) # if_exp_args[i] is the boolean expression
-            return meta_eval(if_exp_args[i + 1], scope) # if_exp_args[i + 1] is the value to return
+        if metajulia_eval(if_exp_args[i], scope) # if_exp_args[i] is the boolean expression
+            return metajulia_eval(if_exp_args[i + 1], scope) # if_exp_args[i + 1] is the value to return
         else
             i += 2
         end
     end
-    return meta_eval(if_exp_args[end], scope)
+    return metajulia_eval(if_exp_args[end], scope)
 end
 
 function eval_block(block_args, scope)
     args_length = length(block_args)     #block_args represent the instructions inside the block body
     i = 1     #in julia arrays start at 1
     while i < args_length
-        meta_eval(block_args[i], scope)
+        metajulia_eval(block_args[i], scope)
         i += 1
     end
-    return meta_eval(block_args[i], scope)
+    return metajulia_eval(block_args[i], scope)
 end
 
 function is_expression(var)
@@ -334,7 +334,7 @@ function eval_fexpr_call(fun_call_exp_args, scope)
     # Create a local scope for the function call
     local_scope = Dict(zip(params, param_values))
     # Evaluate the function body in the local scope
-    result = meta_eval(body, local_scope)
+    result = metajulia_eval(body, local_scope)
 
     return result
 end
@@ -356,7 +356,7 @@ function eval_macro(exp, scope)
         macro_body = replace_expr(macro_body, Expr(:$, param), arg)
     end
     fix_scope = Dict()
-    return meta_eval(macro_body.args[1], fix_scope)
+    return metajulia_eval(macro_body.args[1], fix_scope)
 end
 
 function is_macro_expansion(exp, scope)
