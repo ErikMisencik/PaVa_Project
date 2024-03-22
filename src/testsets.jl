@@ -132,15 +132,19 @@ include("testing.jl")
 
     @testset "ANONYMOUS FUNCTIONS" begin
 
-        @test metajulia_eval(:((() -> 5)())) == 5
-        @test metajulia_eval(:((x -> x + 1)(2))) == 3
-        @test metajulia_eval(:(((x, y) -> x + y)(1, 2))) == 3
-        @test metajulia_eval(:(((x, y, z) -> x + y + z)(1, 2, 3))) == 6
+        @testset "Basic Anonymous Functions" begin   
+            @test metajulia_eval(:((() -> 5)())) == 5
+            @test metajulia_eval(:((x -> x + 1)(2))) == 3
+            @test metajulia_eval(:(((x, y) -> x + y)(1, 2))) == 3
+            @test metajulia_eval(:(((x, y, z) -> x + y + z)(1, 2, 3))) == 6
+        end
 
-        @test metajulia_eval(:(sum((() -> 1)(), 2, 3))) == 6
-        @test metajulia_eval(:(sum(((x) -> x + 1)(1), 2, 3))) == 7
-        @test metajulia_eval(:(sum(((x, y) -> x + y + 1)(1, 2), 2, 3))) == 9
-        @test metajulia_eval(:(sum(((x, y, z) -> x + y + z + 1)(1, 2, 3), 2, 3))) == 12
+        @testset "Use Anonymous functions as input" begin
+            @test metajulia_eval(:(sum((() -> 1)(), 2, 3))) == 6
+            @test metajulia_eval(:(sum(((x) -> x + 1)(1), 2, 3))) == 7
+            @test metajulia_eval(:(sum(((x, y) -> x + y + 1)(1, 2), 2, 3))) == 9
+            @test metajulia_eval(:(sum(((x, y, z) -> x + y + z + 1)(1, 2, 3), 2, 3))) == 12
+        end
 
         my_scope = Dict()
         metajulia_eval(:(sum(f, a, b) = a > b ? 0 : f(a) + sum(f, a + 1, b)), my_scope)
