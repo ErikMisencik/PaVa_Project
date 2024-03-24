@@ -340,29 +340,31 @@ function eval_fexpr_call(fun_call_exp_args, scope)
 end
 
  ############### START ADDED FOR MACRO ##############
-function define_macro(exp, scope)
-    macro_name = exp.args[1].args[1]  # Extracting the macro name
-    macro_body = exp.args[2]  # Extracting the macro body
-    scope[string(macro_name)] = (:macro, exp.args[1].args[2:end], macro_body)
+ 
+struct MacroDef
+    name::String
+    params::Vector{Symbol}
+    body::Expr
 end
 
-function eval_macro(exp, scope)
-    macro_name = string(exp.args[1])
-    macro_def = scope[macro_name]
-    macro_body = macro_def[3]
-    macro_args = exp.args[2:end]
+function define_macro(exp, scope)
+    macro_name, macro_params, macro_body = string(exp.args[1].args[1]), exp.args[1].args[2:end], exp.args[2]
+    scope[macro_name] = MacroDef(macro_name, macro_params, macro_body)
+end
 
-    for (param, arg) in zip(macro_def[2], macro_args)
-        macro_body = replace_expr(macro_body, Expr(:$, param), arg)
-    end
-    fix_scope = Dict()
-    return metajulia_eval(macro_body.args[1], fix_scope)
+
+function eval_macro(exp, scope)
+
+    macro_def = scope[string(exp.args[1])]
+    macro_body = macro_def.body
+    macro_args = exp.args[2:end]
+    macro_body = foldl((body, pair) -> replace_expr(body, Expr(:$, pair[1]), pair[2]), zip(macro_def.params, macro_args), init = macro_body)
+    metajulia_eval(macro_body.args[1], Dict())
 end
 
 function is_macro_expansion(exp, scope)
     if isa(exp, Expr) && exp.head == :call
-        macro_name = string(exp.args[1])
-        return haskey(scope, macro_name) ? :macro : false
+        return haskey(scope, string(exp.args[1])) ? :macro : false
     elseif isa(exp, Expr) && exp.head == :$=
         return :macro_def
     end
@@ -373,8 +375,7 @@ function replace_expr(expr, to_replace, replacement)
     if expr == to_replace
         return replacement
     elseif isa(expr, Expr)
-        # ericek na tuto casť kodu musis spravit evaluaciu, meta_eval(keke, scope) a nejako poriesiť scope ak treba ale možno netreba.
-        return Expr(expr.head, [replace_expr(arg, to_replace, replacement) for arg in expr.args]...)
+        return Expr(expr.head, map(arg -> replace_expr(arg, to_replace, replacement), expr.args)...)
     else
         return expr
     end
