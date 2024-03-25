@@ -146,16 +146,28 @@ include("testing.jl")
             @test metajulia_eval(:(sum(((x, y, z) -> x + y + z + 1)(1, 2, 3), 2, 3))) == 12
         end
 
-        my_scope = Dict()
-        metajulia_eval(:(sum(f, a, b) = a > b ? 0 : f(a) + sum(f, a + 1, b)), my_scope)
-        @test metajulia_eval(:(sum(x -> x * x, 1, 10)), my_scope) == 385 skip = true
+        @testset "Use Anonymous function as function inside another function" begin
+            my_scope = Dict()
+            metajulia_eval(:(fun_zero(fun_exp, param) = fun_exp() + param), my_scope)
+            @test metajulia_eval(:(fun_zero(() -> 6, 3)), my_scope) == 9 
+            
+            metajulia_eval(:(fun_one(fun_exp, param) = fun_exp(param)), my_scope)
+            @test metajulia_eval(:(fun_one(x -> x + x, 3)), my_scope) == 6
 
-        @test metajulia_eval(:(incr = let priv_counter = 0
-                () -> priv_counter = priv_counter + 1
-            end), my_scope) skip = true
-        @test metajulia_eval(incr(), my_scope) == 1 skip = true
-        @test metajulia_eval(incr(), my_scope) == 2 skip = true
+            metajulia_eval(:(fun_two(fun_exp, param_one, param_two) = fun_exp(param_one, param_two)), my_scope)
+            @test metajulia_eval(:(fun_two((x, y) -> x * y, 3, 5)), my_scope) == 15
+        end
 
+        @testset "Anonymous tasks from script" begin
+            my_scope = Dict()
+            metajulia_eval(:(sum(f, a, b) = a > b ? 0 : f(a) + sum(f, a + 1, b)), my_scope)
+            @test metajulia_eval(:(sum(x -> x * x, 1, 10)), my_scope) == 385 skip=true
+    
+            @test metajulia_eval(:(incr = let priv_counter = 0
+                    () -> priv_counter = priv_counter + 1
+                end), my_scope) skip = true
+            @test metajulia_eval(incr(), my_scope) == 1 skip = true
+            @test metajulia_eval(incr(), my_scope) == 2 skip = true
+        end
     end
-
 end
