@@ -342,8 +342,7 @@ function eval_fexpr_def(function_decl)
     body = function_decl.args[end]
 
     function_object = fexpr( params, body)  # Create a function object
-    set_variable(name) = function_object    # Update scope
-
+    set_variable(name, function_object) # Update scope
 end
 	
 function eval_fexpr_call(fun_call_exp_args)
@@ -356,6 +355,7 @@ function eval_fexpr_call(fun_call_exp_args)
 
     # Create a local scope for the fexpr call
     local_scope = Dict(zip(params, param_values))
+    merge!(scope_stack[end], local_scope)   # add local scope to current env
     result = metajulia_eval(body)
     return result
 end
