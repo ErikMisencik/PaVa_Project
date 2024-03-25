@@ -10,5 +10,5 @@ default_sym_dict = Dict(
     :-= => (operator_exp, scope) -> (return assign_var(operator_exp.args[1], metajulia_eval(operator_exp.args[1], scope) - operator_exp.args[2], scope)),
     :tuple => (operator_exp, scope) -> tuple(operator_exp.args...),
     :(:=) => (operator_exp, scope) ->  eval_fexpr_def(operator_exp, scope),
-    :-> => (operator_exp, scope) ->  return Fun_Def(operator_exp.args[1:end-1], operator_exp.args[2].args[2])
-)
+    :-> => (operator_exp, scope) ->  return assign_anonymous_fun(operator_exp, scope)
+    )
