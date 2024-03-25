@@ -101,8 +101,10 @@ function eval_exp(exp, scope)
     if exp.head == :quote
         eval_quote(exp, scope)  # Handle quoted expressions
     elseif exp.head != :call
+        println("1")
         eval_operator(exp, scope)
     else
+        println("3")
         eval_call(exp, scope)
     end
 end
@@ -110,47 +112,46 @@ end
 function eval_operator(operator_exp, scope)
     if haskey(default_sym_dict, operator_exp.head)
         # the dict defines basic operation they can be retrieved by the value 
+        println(default_sym_dict[operator_exp.head](operator_exp, scope))
         return default_sym_dict[operator_exp.head](operator_exp, scope)
     end
-    throw(UndefVarError("Operator '$operator_exp.head' not defined."))
+    throw(UndefVarError(operator_exp.head))
 end
 
 # First the scope is checked for a name reference. This allows to override default fun. 
 function eval_call(call, scope)
     fun_name = call.args[1]
+    println(fun_name)
     if is_fun_defined(fun_name, scope)
+        println("a")
         return eval_fun_call(call.args, scope)
-    end
-    if is_default_fun_defined(fun_name)
+    elseif is_default_fun_defined(fun_name)
+        println("b")
         # the dict defines basic operation they can be retrieved by the value 
         return default_fun_dict[fun_name](call, scope)
-    end
-    if is_anonymous_call(call)
-        anonymous_Fun = Anonymous_Fun(metajulia_eval(call.args[1].args[1]), call.args[2:end], call.args[1].args[2].args[2])
-        return eval_anonymous_call(anonymous_Fun)
-    end
-    if typeof(scope[call.args[1]]) == fexpr
+    elseif is_anonymous_call(call)
+        println("c")
+        println(call)
+        return eval_anonymous_call(metajulia_eval(call.args[1]), call.args[2])
+    elseif typeof(scope[call.args[1]]) == fexpr
         return eval_fexpr_call(call.args, scope)
-    end
-    if haskey(scope,call.args[1])        
+    elseif haskey(scope,call.args[1])        
         eval_fun_call(call.args, scope)    
     end
-    throw(UndefVarError("Function '$fun_name' not defined."))
+    throw(UndefVarError(fun_name))
 end
 
 struct Anonymous_Fun
-    inner_scope::Dict
+    input_params::Any
     body::Any # can be expression or return value
 end
 
-function Anonymous_Fun(var_names, var_values, body)
-    var_names = typeof(var_names) == Symbol ? [var_names] : var_names
-    inner_scope = Dict(zip(var_names, var_values))
-    return Anonymous_Fun(inner_scope, body)
-end
-
-function eval_anonymous_call(anonymous_Fun)
-    return(metajulia_eval(anonymous_Fun.body, anonymous_Fun.inner_scope))
+function eval_anonymous_call(anon_fun, var_values)
+    input = is_symbol(anon_fun.input_params) ? (anon_fun.input_params,) : anon_fun.input_params
+    values = is_symbol(var_values) ? (var_values,) : var_values
+    inner_scope = Dict(zip(input, values))
+    println(inner_scope)
+    return(metajulia_eval(anon_fun.body, inner_scope))
 end
 
 function is_anonymous_call(call)
@@ -236,7 +237,6 @@ end
 function userFunction(fun_call_exp_args, scope)
     fun_name = fun_call_exp_args[1]
     param_values = map(x -> metajulia_eval(x, scope), fun_call_exp_args[2:end])
-
     fun_dev = scope[fun_name]
     local_scope = Dict(zip(fun_dev.input_params, param_values))
     body = fun_dev.body
@@ -250,6 +250,7 @@ function eval_fun_call(fun_call_exp_args, scope)
 end
 
 function is_fun_defined(fun_name, scope)
+    println(scope[fun_name])
     return haskey(scope, fun_name) && typeof(scope[fun_name]) == Fun_Def
 end
 
@@ -380,3 +381,15 @@ function replace_expr(expr, to_replace, replacement)
     end
 end
  ############### END OF ADDED FOR MACRO ##############
+ s = Dict()
+
+ @assert(metajulia_eval(:(sum(f, a, b) = 
+ a > b ?
+     0 :
+     f(a) + sum(f, a + 1, b)), s) !== nothing)
+
+
+metajulia_eval(:((x -> x + 1)(2)))
+
+
+@assert(metajulia_eval(:(sum(x -> x*x, 1, 10)), s) == 385)

@@ -9,5 +9,6 @@ default_sym_dict = Dict(
     :+= => (operator_exp, scope) -> (return assign_var(operator_exp.args[1], metajulia_eval(operator_exp.args[1], scope) + operator_exp.args[2], scope)),
     :-= => (operator_exp, scope) -> (return assign_var(operator_exp.args[1], metajulia_eval(operator_exp.args[1], scope) - operator_exp.args[2], scope)),
     :tuple => (operator_exp, scope) -> tuple(operator_exp.args...),
-    :(:=) => (operator_exp, scope) ->  eval_fexpr_def(operator_exp, scope)
+    :(:=) => (operator_exp, scope) ->  eval_fexpr_def(operator_exp, scope),
+    :(->) => (operator_exp, scope) -> Anonymous_Fun(operator_exp.args[1], operator_exp.args[2])
 )
