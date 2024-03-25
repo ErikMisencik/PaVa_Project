@@ -19,5 +19,6 @@ default_fun_dict = Dict(
     :! => (call, scope) -> (return  !metajulia_eval(call.args[2], scope)),
     
     #misc
-    :println => (call, scope) -> (return println(metajulia_eval(call.args[2], scope)))
+    :println => (call, scope) -> (return println(metajulia_eval(call.args[2], scope))),
+    :eval => (call, scope) -> (return metajulia_eval(call.args[2], scope)),
 )
