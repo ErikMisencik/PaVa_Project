@@ -121,7 +121,6 @@ end
 function eval_call(call)
     fun = call.args[1]
     if is_anonymous_call(call)
-        println("anon ",call)
         if (length(call.args) <= 1)  # no args
             return metajulia_eval(fun.args[2])
         end
@@ -146,7 +145,6 @@ end
 
 function eval_anonymous_call(anon_fun, var_values)
     add_scope()
-    println(anon_fun, "\n", var_values)
     input = to_tuple(anon_fun.input_params)
     values = to_tuple(var_values)
     inner_scope = Dict(zip(input, values))
@@ -240,15 +238,18 @@ function userFunction(fun_call_exp_args)
     param_values = map(x -> metajulia_eval(x), fun_call_exp_args[2:end])
     fun_def = get_variable(fun_name)
 
-    if typeof(fun_def) == Fun_Def
+    if typeof(fun_def) == Fun_Def   # defined function
         local_scope = Dict(zip(fun_def.input_params, param_values))
-    else
-        # non defined function
+        body = fun_def.body
+    elseif typeof(fun_def) == Anonymous_Fun # non defined function
         input_params = to_tuple(fun_def.input_params)
         local_scope = Dict(zip(input_params, param_values))
+        body = fun_def.body
+    else    # non params function
+        local_scope = Dict()
+        body = fun_def
     end
     merge!(scope_stack[end], local_scope)   # add local scope to current env
-    body = fun_def.body
     return UserFunction(body, local_scope)
 end
 
@@ -261,7 +262,20 @@ function eval_fun_call(fun_call_exp_args)
 end
 
 function is_fun_defined(fun_name)
-    return haskey(scope_stack[end], fun_name) && typeof(scope_stack[end][fun_name]) == Fun_Def
+    return (get_variable(fun_name) != false) && typeof(get_variable(fun_name)) == Fun_Def
+end
+
+function eval_global(global_exp_args)
+    name = global_exp_args.args[1].args[1]
+    value =  metajulia_eval(global_exp_args.args[2])
+
+    if haskey(scope_stack[1], name)
+        # Update the existing variable in the global scope
+        set_variable(name, value)
+    else
+        # Create a new variable in the global scope
+        scope_stack[1][name] = value
+    end
 end
 
 function eval_if(if_exp_args)
@@ -429,7 +443,7 @@ function get_variable(name::Symbol)
             return frame[name]
         end
     end
-    error("Variable $name not found")
+    return false
 end
 
 """
@@ -443,7 +457,14 @@ end
 println(metajulia_eval(:(incr()))) """
 
 try
-println(metajulia_eval(:((x -> x + 1)(2))))
+#println(metajulia_eval(:((x -> x + 1)(2))))
+println(metajulia_eval(:(
+    begin
+        let secret = 1234
+            global show_secret() = secret
+        end
+        show_secret()
+    end)))
 catch e
-    println("error")
+    println(e)
 end
