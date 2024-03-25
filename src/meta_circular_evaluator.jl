@@ -121,6 +121,7 @@ end
 function eval_call(call)
     fun = call.args[1]
     if is_anonymous_call(call)
+        println("anon ",call)
         if (length(call.args) <= 1)  # no args
             return metajulia_eval(fun.args[2])
         end
@@ -144,10 +145,14 @@ struct Anonymous_Fun
 end
 
 function eval_anonymous_call(anon_fun, var_values)
+    add_scope()
+    println(anon_fun, "\n", var_values)
     input = to_tuple(anon_fun.input_params)
     values = to_tuple(var_values)
     inner_scope = Dict(zip(input, values))
-    return metajulia_eval(anon_fun.body, inner_scope)
+    result = metajulia_eval(anon_fun.body)
+    remove_scope()
+    return result
 end
 
 function is_anonymous_call(call)
@@ -437,8 +442,8 @@ end
 ))
 println(metajulia_eval(:(incr()))) """
 
-println( metajulia_eval(:(
-    let x(y) = y + 1
-        x(1)
-    end
-)))
+try
+println(metajulia_eval(:((x -> x + 1)(2))))
+catch e
+    println("error")
+end
