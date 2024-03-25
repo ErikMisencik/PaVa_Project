@@ -86,14 +86,11 @@ end
 
 function eval_exp(exp, scope)
 
-    ############### START ADDED FOR MACRO ##############
-    # First check if it's a macro call or definition
     # Check for macro processing
     result = process_macro(exp, scope)
     if result != false
         return result
     end
-    ############### END OF ADDED FOR MACRO ##############
  
     if exp.head == :quote
         eval_quote(exp, scope)  # Handle quoted expressions
@@ -391,4 +388,3 @@ function process_macro(exp, scope)
         false
     end
 end
- ############### END OF ADDED FOR MACRO ##############
