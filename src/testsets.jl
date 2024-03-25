@@ -161,7 +161,7 @@ include("testing.jl")
         @testset "Anonymous tasks from script" begin
             my_scope = Dict()
             metajulia_eval(:(sum(f, a, b) = a > b ? 0 : f(a) + sum(f, a + 1, b)), my_scope)
-            @test metajulia_eval(:(sum(x -> x * x, 1, 10)), my_scope) == 385 skip=true
+            @test metajulia_eval(:(sum(x -> x * x, 1, 10)), my_scope) == 385
     
             @test metajulia_eval(:(incr = let priv_counter = 0
                     () -> priv_counter = priv_counter + 1
