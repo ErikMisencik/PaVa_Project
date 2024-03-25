@@ -1,24 +1,24 @@
 default_fun_dict = Dict(
     #math operators
-    :+ => (call, scope) -> (return reduce(+, map(operand -> metajulia_eval(operand, scope), call.args[2:end]))), #not sure if the eval works
-    :- => (call, scope) -> (return reduce(-, map(operand -> metajulia_eval(operand, scope), call.args[2:end]))),
-    :* => (call, scope) -> (return reduce(*, map(operand -> metajulia_eval(operand, scope), call.args[2:end]))),
-    :/ => (call, scope) -> (return reduce(/, map(operand -> metajulia_eval(operand, scope), call.args[2:end]))),
-    :sum =>(call, scope) -> (return sum(map(operand -> metajulia_eval(operand, scope), call.args[2:end]))),
+    :+ => (call) -> (return reduce(+, map(operand -> metajulia_eval(operand), call.args[2:end]))), #not sure if the eval works
+    :- => (call) -> (return reduce(-, map(operand -> metajulia_eval(operand), call.args[2:end]))),
+    :* => (call) -> (return reduce(*, map(operand -> metajulia_eval(operand), call.args[2:end]))),
+    :/ => (call) -> (return reduce(/, map(operand -> metajulia_eval(operand), call.args[2:end]))),
+    :sum =>(call) -> (return sum(map(operand -> metajulia_eval(operand), call.args[2:end]))),
     
 
     #compare operators
-    :< => (call, scope) -> (return metajulia_eval(call.args[2], scope) < metajulia_eval(call.args[3], scope)),
-    :(<=) => (call, scope) -> (return metajulia_eval(call.args[2], scope) <= metajulia_eval(call.args[3], scope)),
-    :> => (call, scope) -> (return metajulia_eval(call.args[2], scope) > metajulia_eval(call.args[3], scope)),
-    :(>=) => (call, scope) -> (return metajulia_eval(call.args[2], scope) >= metajulia_eval(call.args[3], scope)),
-    Symbol("==") => (call, scope) -> (return metajulia_eval(call.args[2], scope) == metajulia_eval(call.args[3], scope)),
-    Symbol("!=") => (call, scope) -> (return metajulia_eval(call.args[2], scope) != metajulia_eval(call.args[3], scope)),
+    :< => (call) -> (return metajulia_eval(call.args[2]) < metajulia_eval(call.args[3])),
+    :(<=) => (call) -> (return metajulia_eval(call.args[2]) <= metajulia_eval(call.args[3])),
+    :> => (call) -> (return metajulia_eval(call.args[2]) > metajulia_eval(call.args[3])),
+    :(>=) => (call) -> (return metajulia_eval(call.args[2]) >= metajulia_eval(call.args[3])),
+    Symbol("==") => (call) -> (return metajulia_eval(call.args[2]) == metajulia_eval(call.args[3])),
+    Symbol("!=") => (call) -> (return metajulia_eval(call.args[2]) != metajulia_eval(call.args[3])),
 
     #unuary operators
-    :! => (call, scope) -> (return  !metajulia_eval(call.args[2], scope)),
+    :! => (call) -> (return  !metajulia_eval(call.args[2])),
     
     #misc
-    :println => (call, scope) -> (return println(metajulia_eval(call.args[2], scope))),
-    :eval => (call, scope) -> (return metajulia_eval(call.args[2], scope)),
+    :println => (call) -> (return println(metajulia_eval(call.args[2]))),
+    :eval => (call) -> (return metajulia_eval(call.args[2])),
 )
