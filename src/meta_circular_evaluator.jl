@@ -58,7 +58,6 @@ function eval_quote(quote_exp, scope)
         # Evaluate the interpolated expression
         return metajulia_eval(quote_exp.args[1], scope)
 
-    ############### START ADDED FOR MACRO ##############
     elseif is_expression(quote_exp) && quote_exp.head == :quote
         if is_macro_expansion(quote_exp, scope)
             # Evaluate the content of the quote if it's part of a macro expansion
@@ -66,7 +65,6 @@ function eval_quote(quote_exp, scope)
         else
             return quote_exp
         end
-    ############### END OF ADDED FOR MACRO ##############
 
     elseif isa(quote_exp, QuoteNode)
         # Return the value of the QuoteNode as is
@@ -210,6 +208,16 @@ struct Fun_Def
     body::Any
 end   
 
+Base.show(io::IOBuffer, f::Fun_Def) = print(io, "<function>")
+
+function assign_anonymous_fun(anon_fun_exp, scope)
+    params = metajulia_eval(anon_fun_exp.args[1], scope)
+    params = is_symbol(params) ? (params,) : params     # Put param in tuple if singular one param
+    body = anon_fun_exp.args[2].args[2]
+    return Fun_Def(params, body)
+end   
+
+
 function assign_fun(function_decl, function_exp, scope)
     # Extract function parameters and body
     name = function_decl.args[1]
@@ -228,18 +236,17 @@ end
 
 function userFunction(fun_call_exp_args, scope)
     fun_name = fun_call_exp_args[1]
-    param_values = map(x -> metajulia_eval(x, scope), fun_call_exp_args[2:end])
-
+    param_values = map(x -> metajulia_eval(x, scope), fun_call_exp_args[2:end]
     fun_dev = scope[fun_name]
     local_scope = Dict(zip(fun_dev.input_params, param_values))
     body = fun_dev.body
     return UserFunction(body, local_scope)
 end
 
-function eval_fun_call(fun_call_exp_args, scope)
-    fun = userFunction(fun_call_exp_args, scope)
-    fun_scope = merge(scope, fun.local_scope)
-    return metajulia_eval(fun.body, fun_scope)
+function eval_fun_call(fun_call_exp, scope)
+    fun = userFunction(fun_call_exp.args, scope)
+    execution_scope = merge(scope, fun.fun_scope)
+    return metajulia_eval(fun.body, execution_scope)
 end
 
 function is_fun_defined(fun_name, scope)
@@ -334,8 +341,6 @@ function eval_fexpr_call(fun_call_exp_args, scope)
 
     return result
 end
-
- ############### START ADDED FOR MACRO ##############
  
 struct MacroDef
     name::String
