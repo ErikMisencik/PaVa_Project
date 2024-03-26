@@ -2,8 +2,6 @@ include("testing.jl")
 include("default_fun.jl")
 include("default_sym.jl")
 
-debug = false
-
 function metajulia_repl()
     scope = Dict()
     while true
@@ -32,10 +30,6 @@ function meta_eval_string(input_string)
 end
 
 function metajulia_eval(exp, scope=Dict())
-    if (debug)
-        println(typeof(exp))
-        println(exp)
-        println("Current scope: ", scope)
     end
     if is_expression(exp)
         return eval_exp(exp, scope)
