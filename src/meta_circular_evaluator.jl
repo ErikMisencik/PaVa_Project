@@ -30,7 +30,6 @@ function meta_eval_string(input_string)
 end
 
 function metajulia_eval(exp, scope=Dict())
-    end
     if is_expression(exp)
         return eval_exp(exp, scope)
     elseif is_symbol(exp)
