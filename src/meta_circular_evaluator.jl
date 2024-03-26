@@ -21,10 +21,6 @@ function metajulia_repl()
     end
 end
 
-function metajulia_eval(exp, scope)
-    return metajulia_eval(exp, scope)
-end
-
 """
 Could lead to very interesting use cases. If we are able to read julia code as string we could expose an api that takes julia code as input and we can process
 this with our meta evaluator.
