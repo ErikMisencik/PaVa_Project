@@ -202,7 +202,7 @@ struct Fun_Def
 end   
 Base.show(io::IOBuffer, f::Fun_Def) = print(io, "<function>")
 
-function assign_anonymous_fun(param_in::Union{Symbol, Array}, body::Expr, scope)
+function assign_anonymous_fun(param_in, body, scope)
     params = metajulia_eval(param_in, scope)
     params = is_symbol(params) ? (params,) : params     # Put param in tuple if singular one param
     body = body
