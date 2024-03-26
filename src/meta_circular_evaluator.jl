@@ -202,7 +202,7 @@ struct Fun_Def
 end   
 Base.show(io::IOBuffer, f::Fun_Def) = print(io, "<function>")
 
-function assign_anonymous_fun(param_in, body, scope)
+function fun_def(param_in, body, scope)
     params = metajulia_eval(param_in, scope)
     params = is_symbol(params) ? (params,) : params     # Put param in tuple if singular one param
     body = body
@@ -210,7 +210,7 @@ function assign_anonymous_fun(param_in, body, scope)
 end 
 
 function assign_fun(function_exp, scope)  
-    fun_dev = assign_anonymous_fun(function_exp.args[1].args[2:end], function_exp.args[2].args[end], scope)
+    fun_dev = fun_def(function_exp.args[1].args[2:end], function_exp.args[2].args[end], scope)
     fun_name = function_exp.args[1].args[1]
     scope[fun_name] = fun_dev   # Define for the fun_name the value of the definition in current scope
 end 
