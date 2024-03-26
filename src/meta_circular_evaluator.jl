@@ -190,7 +190,7 @@ function eval_let_defs(exp, scope)
     var_name = exp.args[1]
 
     if is_expression(var_name)
-        assign_fun(var_name, exp.args[2], scope)   # Function Definition
+        assign_fun(exp, scope)   # Function Definition
     else
         assign_var(var_name, metajulia_eval(exp.args[2], scope), scope)
     end
@@ -209,11 +209,11 @@ function assign_anonymous_fun(anon_fun_exp, scope)
     return Fun_Def(params, body)
 end 
 
-function assign_fun(function_decl, function_exp, scope)
+function assign_fun(function_exp, scope)
     # Extract function parameters and body
-    name = function_decl.args[1]
-    params = function_decl.args[2:end]
-    body = function_exp.args[end]
+    name = function_exp.args[1].args[1]
+    params = function_exp.args[1].args[2:end]
+    body = function_exp.args[2].args[end]
 
     params = is_symbol(params) ? (params,) : params     # Put param in tuple if singular one param
     fun_dev = Fun_Def(params, body)
@@ -299,7 +299,7 @@ function eval_assignment(operator_exp, scope)
 
     # if call is a function definition
     if is_expression(operator_exp.args[1]) 
-        return assign_fun(operator_exp.args[1], operator_exp.args[2], scope)
+        return assign_fun(operator_exp, scope)
     else
         return assign_var(operator_exp.args[1], operator_exp.args[2], scope)
     end
