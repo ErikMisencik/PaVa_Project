@@ -202,22 +202,17 @@ struct Fun_Def
 end   
 Base.show(io::IOBuffer, f::Fun_Def) = print(io, "<function>")
 
-function assign_anonymous_fun(anon_fun_exp, scope)
-    params = metajulia_eval(anon_fun_exp.args[1], scope)
+function assign_anonymous_fun(param_in::Union{Symbol, Array}, body::Expr, scope)
+    params = metajulia_eval(param_in, scope)
     params = is_symbol(params) ? (params,) : params     # Put param in tuple if singular one param
-    body = anon_fun_exp.args[2].args[2]
+    body = body
     return Fun_Def(params, body)
 end 
 
-function assign_fun(function_exp, scope)
-    # Extract function parameters and body
-    name = function_exp.args[1].args[1]
-    params = function_exp.args[1].args[2:end]
-    body = function_exp.args[2].args[end]
-
-    params = is_symbol(params) ? (params,) : params     # Put param in tuple if singular one param
-    fun_dev = Fun_Def(params, body)
-    scope[name] = fun_dev   # Update scope
+function assign_fun(function_exp, scope)  
+    fun_dev = assign_anonymous_fun(function_exp.args[1].args[2:end], function_exp.args[2].args[end], scope)
+    fun_name = function_exp.args[1].args[1]
+    scope[fun_name] = fun_dev   # Define for the fun_name the value of the definition in current scope
 end 
 
 struct UserFunction # System does not allow to use the name Function
@@ -390,3 +385,10 @@ function process_macro(exp, scope)
     end
 end
  ############### END OF ADDED FOR MACRO ##############
+
+ metajulia_eval(:(
+    begin
+        sum(f, a, b) = a > b ? 0 : f(a) + sum(f, a + 1, b)
+        sum(x -> x * x, 1, 10)
+    end
+))
