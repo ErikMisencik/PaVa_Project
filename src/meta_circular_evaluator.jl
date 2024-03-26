@@ -46,7 +46,7 @@ function metajulia_eval(exp, scope=Dict())
     elseif is_symbol(exp)
         return return_var(exp, scope)
     elseif is_quote(exp)
-        eval_quote(exp, scope)
+        return eval_quote(exp, scope)
     else
         return exp
     end
@@ -57,23 +57,25 @@ function eval_quote(quote_exp, scope)
     if is_expression(quote_exp) && quote_exp.head == :$
         # Evaluate the interpolated expression
         return metajulia_eval(quote_exp.args[1], scope)
+    end
 
-    ############### START ADDED FOR MACRO ##############
-    elseif is_expression(quote_exp) && quote_exp.head == :quote
-        if is_macro_expansion(quote_exp, scope)
-            # Evaluate the content of the quote if it's part of a macro expansion
-            return metajulia_eval(quote_exp.args[1], scope)
-        else
-            return quote_exp
-        end
-    ############### END OF ADDED FOR MACRO ##############
-
-    elseif isa(quote_exp, QuoteNode)
+    if isa(quote_exp, QuoteNode)
         # Return the value of the QuoteNode as is
         return quote_exp.value
     else
-        return quote_exp
+        return quote_exp.args[1]
     end
+    
+    # ############### THIS IS NOT WORKING FOR MACRO ##############
+    # if is_expression(quote_exp) && quote_exp.head == :quote
+    #     if is_macro_expansion(quote_exp, scope)
+    #         # Evaluate the content of the quote if it's part of a macro expansion
+    #         return metajulia_eval(quote_exp.args[1], scope)
+    #     else
+    #         return quote_exp
+    #     end
+    # end
+    # ############### THIS IS NOT WORKING FOR MACRO ##############
 end
 
 function return_var(name, scope)
@@ -86,11 +88,11 @@ end
 
 function eval_exp(exp, scope)
 
-    # Check for macro processing
-    result = process_macro(exp, scope)
-    if result != false
-        return result
-    end
+    # First check if it's a macro call or definition
+      result = process_macro(exp, scope)
+      if result != false
+          return result
+      end
  
     if exp.head == :quote
         eval_quote(exp, scope)  # Handle quoted expressions
@@ -113,7 +115,7 @@ end
 function eval_call(call, scope)
     fun_name = call.args[1]
     if is_fun_defined(fun_name, scope)
-        return eval_fun_call(call.args, scope)
+        return eval_fun_call(call, scope)
     end
     if is_default_fun_defined(fun_name)
         # the dict defines basic operation they can be retrieved by the value 
@@ -127,7 +129,7 @@ function eval_call(call, scope)
         return eval_fexpr_call(call.args, scope)
     end
     if haskey(scope,call.args[1])        
-        eval_fun_call(call.args, scope)    
+        eval_fun_call(call, scope)    
     end
     throw(UndefVarError("Function '$fun_name' not defined."))
 end
@@ -209,6 +211,14 @@ struct Fun_Def
     input_params::Any
     body::Any
 end   
+Base.show(io::IOBuffer, f::Fun_Def) = print(io, "<function>")
+
+function assign_anonymous_fun(anon_fun_exp, scope)
+    params = metajulia_eval(anon_fun_exp.args[1], scope)
+    params = is_symbol(params) ? (params,) : params     # Put param in tuple if singular one param
+    body = anon_fun_exp.args[2].args[2]
+    return Fun_Def(params, body)
+end 
 
 function assign_fun(function_decl, function_exp, scope)
     # Extract function parameters and body
@@ -223,23 +233,29 @@ end
 
 struct UserFunction # System does not allow to use the name Function
     body::Any
-    local_scope::Dict
+    fun_scope::Dict
 end
 
 function userFunction(fun_call_exp_args, scope)
     fun_name = fun_call_exp_args[1]
     param_values = map(x -> metajulia_eval(x, scope), fun_call_exp_args[2:end])
+    fun_dev = scope[fun_name]  
 
-    fun_dev = scope[fun_name]
-    local_scope = Dict(zip(fun_dev.input_params, param_values))
+ 
+
+    fun_scope = Dict(zip(fun_dev.input_params, param_values))
+    
+ 
+    
     body = fun_dev.body
-    return UserFunction(body, local_scope)
+    return UserFunction(body, fun_scope)
 end
 
-function eval_fun_call(fun_call_exp_args, scope)
-    fun = userFunction(fun_call_exp_args, scope)
-    fun_scope = merge(scope, fun.local_scope)
-    return metajulia_eval(fun.body, fun_scope)
+function eval_fun_call(fun_call_exp, scope)
+    fun = userFunction(fun_call_exp.args, scope)
+    execution_scope = merge(scope, fun.fun_scope)
+
+    return metajulia_eval(fun.body, execution_scope)
 end
 
 function is_fun_defined(fun_name, scope)
@@ -304,6 +320,7 @@ struct fexpr
     params
     body
 end
+Base.show(io::IOBuffer, f::fexpr) = print(io, "<fexpr>")
 
 function eval_fexpr_def(function_decl, scope)
     # Extract function parameters and body
@@ -318,20 +335,15 @@ end
 	
 function eval_fexpr_call(fun_call_exp_args, scope)
     fun_name = fun_call_exp_args[1]
-    param_values = deepcopy(fun_call_exp_args[2:end])       
-    for i in eachindex(param_values)
-        if is_expression(param_values[i])
-            param_values[i] = param_values[i]
-        end
-    end
-    function_object = scope[fun_name]
-    params = function_object.params
-    body = function_object.body
-    # Create a local scope for the function call
-    local_scope = Dict(zip(params, param_values))
-    # Evaluate the function body in the local scope
-    result = metajulia_eval(body, local_scope)
+    param_values = deepcopy(fun_call_exp_args[2:end])  
 
+    fexpr_object = scope[fun_name]
+    params = fexpr_object.params
+    body = fexpr_object.body
+
+    # Create a local scope for the fexpr call
+    local_scope = Dict(zip(params, param_values))
+    result = metajulia_eval(body, local_scope)
     return result
 end
 
@@ -388,3 +400,4 @@ function process_macro(exp, scope)
         false
     end
 end
+ ############### END OF ADDED FOR MACRO ##############
