@@ -61,10 +61,23 @@ function return_var(name, scope)
     end
 end
 
+has_dollar_sign(args...) = any(contains(string(arg), '$') for arg in args)
+
+function eval_dollar(quote_exp, scope)
+    if has_dollar_sign(quote_exp)
+        if is_expression(quote_exp) && quote_exp.head == :$
+            quote_exp = metajulia_eval(quote_exp.args[1], scope)
+        else
+            quote_exp.args = [eval_dollar(arg, scope) for arg in quote_exp.args]
+        end
+        return eval_dollar(quote_exp, scope)  # Recursively evaluate remaining parts
+    end
+    return quote_exp
+end
+
 function eval_quote(quote_exp, scope)
-    if is_expression(quote_exp) && quote_exp.head == :$
-        # Evaluate the interpolated expression
-        return metajulia_eval(quote_exp.args[1], scope)
+    if is_expression(quote_exp) && has_dollar_sign(quote_exp.args...)
+        return metajulia_eval(eval_dollar(quote_exp), scope)
     end
 
     if is_quote(quote_exp)
