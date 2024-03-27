@@ -119,18 +119,17 @@ function eval_call(call, scope)
     fun = args[1]
     var = is_symbol(fun) ? get_variable(scope, fun) : nothing
 
-    if is_fun_defined(fun, scope)
+    if is_anonymous_call(call)
+        if (length(args) <= 1)  # no args
+            return metajulia_eval(fun.args[2], scope)
+        end
+        return eval_anonymous_call(metajulia_eval(args[1], scope), args[2:end], scope)
+
+    elseif is_fun_defined(fun, scope)
         return eval_fun_call(args, scope)
 
     elseif is_default_fun_defined(fun)
         return default_fun_dict[fun](call, scope)   # the dict defines basic operation they can be retrieved by the value 
-
-    elseif is_anonymous_call(call)
-        if (length(args) <= 1)  # no args
-            return metajulia_eval(fun.args[2], scope)
-        else
-            return eval_anonymous_call(metajulia_eval(args[1], scope), args[2:end], scope)
-        end
 
     elseif is_defined(var)
         if is_fexpr(var)
@@ -201,7 +200,7 @@ function eval_let(let_exp_args, scope)
             end
         end
     end
-    scope = remove_scope(scope)
+    #scope = remove_scope(scope)
     return result
 end
 
@@ -279,7 +278,8 @@ function eval_fun_call(fun_call_exp_args, scope)
 end
 
 function is_fun_defined(fun_name, scope)
-    return is_defined(get_variable(scope, fun_name)) && is_fdef(get_variable(scope, fun_name))
+    var = get_variable(scope, fun_name)
+    return is_defined(var) && is_fdef(var)
 end
 
 function eval_global(global_exp_args, scope)
@@ -454,11 +454,8 @@ function process_macro(exp, scope)
     # Check if it's a macro call or definition
     macro_type = is_macro_expansion(exp, scope)
     if macro_type == :macro_def
-        println("1")
         define_macro(exp, scope)
     elseif macro_type == :macro
-        println("2")
-        println(exp)
         eval_macro(exp, scope)
     else
         return false
@@ -466,7 +463,8 @@ function process_macro(exp, scope)
 end
  ############### END OF ADDED FOR MACRO ##############
 
- function add_scope(scope)
+
+function add_scope(scope)
     new_scope = deepcopy(scope[end])
     push!(scope, new_scope)
     return scope
