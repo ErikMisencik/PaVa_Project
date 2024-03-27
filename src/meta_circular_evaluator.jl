@@ -176,12 +176,7 @@ function eval_anonymous_call(anon_fun, var_values, scope)
 end
 
 function is_anonymous_call(call)
-    if typeof(call.args[1]) == Expr
-        if call.args[1].head == :->
-            return true
-        end
-    end
-    return false
+    return is_expression(call.args[1]) && (call.args[1].head == :->)
 end
 
 function is_default_fun_defined(fun_name)
@@ -220,7 +215,7 @@ function eval_let(let_exp_args, scope)
         end
     end
     
-    #scope = remove_scope(scope)
+    scope = remove_scope(scope)
     return result
 end
 
