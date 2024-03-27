@@ -77,7 +77,7 @@ end
 
 function eval_quote(quote_exp, scope)
     if is_expression(quote_exp) && has_dollar_sign(quote_exp.args...)
-        return metajulia_eval(eval_dollar(quote_exp), scope)
+        return metajulia_eval(eval_dollar(quote_exp, scope), scope)
     end
 
     if is_quote(quote_exp)
@@ -128,26 +128,35 @@ end
 
 # First the scope is checked for a name reference. This allows to override default fun. 
 function eval_call(call, scope)
-    fun = call.args[1]
+    args = call.args
+    fun = args[1]
     var = is_symbol(fun) ? get_variable(scope, fun) : nothing
+
     if is_anonymous_call(call)
-        if (length(call.args) <= 1)  # no args
+        if (length(args) <= 1)  # no args
             return metajulia_eval(fun.args[2], scope)
         end
-        return eval_anonymous_call(metajulia_eval(call.args[1], scope), call.args[2:end], scope)
+        return eval_anonymous_call(metajulia_eval(args[1], scope), args[2:end], scope)
+
     elseif is_fun_defined(fun, scope)
-        return eval_fun_call(call.args, scope)
+        return eval_fun_call(args, scope)
+
     elseif is_default_fun_defined(fun)
-        # the dict defines basic operation they can be retrieved by the value 
-        return default_fun_dict[fun](call, scope)
-    elseif var != false
+        return default_fun_dict[fun](call, scope)   # the dict defines basic operation they can be retrieved by the value 
+
+    elseif get_bool(var)
         if typeof(var) == fexpr
-            return eval_fexpr_call(call.args, scope)
+            return eval_fexpr_call(args, scope)
         else
-            return eval_fun_call(call.args, scope) 
+            return eval_fun_call(args, scope) 
         end   
     end
+    
     throw(UndefVarError(fun))
+end
+
+function get_bool(var)
+    return var != false
 end
 
 struct Anonymous_Fun
@@ -276,7 +285,7 @@ function eval_fun_call(fun_call_exp_args, scope)
 end
 
 function is_fun_defined(fun_name, scope)
-    return (get_variable(scope, fun_name) != false) && typeof(get_variable(scope, fun_name)) == Fun_Def
+    return get_bool(get_variable(scope, fun_name)) && typeof(get_variable(scope, fun_name)) == Fun_Def
 end
 
 function eval_global(global_exp_args, scope)
