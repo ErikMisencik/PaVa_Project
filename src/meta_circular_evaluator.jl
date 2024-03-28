@@ -220,7 +220,7 @@ function eval_let(let_exp_args, scope)
             end
         end
     end
-    #scope = remove_scope(scope)
+    scope = remove_scope(scope)
     return result
 end
 
@@ -310,7 +310,7 @@ end
 function eval_global(global_exp_args, scope)
     name = get_global_name(global_exp_args)
     result = metajulia_eval(global_exp_args, scope)
-    scope[1][name] = result     # Create or update a new variable in the global scope
+    set_global_variable(scope,name,result)    # Create or update a new variable in the global scope
     return result
 end
 
@@ -519,6 +519,10 @@ end
 # Function to set a variable in the current scope
 function set_variable(scope, name::Symbol, value)
     scope[end][name] = value
+end
+
+function set_global_variable(scope, name::Symbol, value)
+    scope[1][name] = value
 end
 
 # Function to get the value of a variable from the scopes
