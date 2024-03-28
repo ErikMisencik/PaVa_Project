@@ -33,7 +33,7 @@ function metajulia_eval(exp, scope=[Dict{Symbol, Any}()])
     if is_expression(exp)
         return eval_exp(exp, scope)
     elseif is_symbol(exp)
-        return return_var(exp, scope)
+        return get_variable(scope,exp)
     elseif is_quoteNode(exp)
         return eval_quote(exp, scope)
     else
@@ -80,14 +80,6 @@ function eval_quote(quote_exp, scope)
     # ############### THIS IS NOT WORKING FOR MACRO ##############
 end
 
-function return_var(name, scope)
-    if haskey(scope[end], name)
-        return scope[end][name]
-    else
-        return name
-    end
-end
-
 function eval_exp(exp, scope)
 #=
     # First check if it's a macro call or definition
@@ -95,7 +87,6 @@ function eval_exp(exp, scope)
     if is_defined(result)
         return result
     end =#
-
     if is_quote(exp)
         eval_quote(exp, scope)  # Handle quoted expressions
     elseif !is_call(exp)
@@ -107,7 +98,7 @@ end
 
 function eval_operator(operator_exp, scope)
     if haskey(default_sym_dict, operator_exp.head)
-        # the dict defines basic operation they can be retrieved by the value 
+        # the dict defines basic operation they can be retrieved by the value
         return default_sym_dict[operator_exp.head](operator_exp, scope)
     end
     throw(UndefVarError(operator_exp.head))
@@ -123,7 +114,7 @@ function eval_call(call, scope)
         if (length(args) <= 1)  # no args
             return metajulia_eval(fun.args[2], scope)
         end
-        return eval_anonymous_call(args, scope)
+        return eval_anonymous_call(metajulia_eval(fun), args[2:end], scope) 
 
     elseif is_fun_defined(fun, scope)
         return eval_fun_call(args, scope)
@@ -149,22 +140,17 @@ struct Anonymous_Fun
     input_params::Any
     body::Any
 end
+
 function Base.show(io::IO, f::Anonymous_Fun) 
-    println(io, "<function>") 
+    print(io, "<function>") 
 end
 
-function eval_anonymous_call(fun, scope)
-    anon_fun = metajulia_eval(get_lambda_body(fun), scope)
-    values = get_lambda_call_values(fun)
-    input = get_lambda_input_params(anon_fun)
+function eval_anonymous_call(fun, params, scope)
 
-    add_scope(scope)
-
-    inner_scope = Dict(zip(input, values))
+    inner_scope = Dict(zip(to_tuple(fun.input_params), params))
     update_scope(scope, inner_scope)
+    result = metajulia_eval(fun.body, scope)
     
-    result = metajulia_eval(anon_fun.body, scope)
-    remove_scope(scope)
     return result
 end
 
@@ -172,18 +158,12 @@ function get_lambda_input_params(fun)
     return to_tuple(fun.input_params)
 end
 
-function get_lambda_call_values(exp)
-    params = exp[2:end]
-    params = to_tuple(params)
-    return params
-end
-
 function get_lambda_body(exp)
     return exp[1]
 end
 
 function is_anonymous_call(call)
-    return is_expression(call.args[1]) && (call.args[1].head == :->)
+    return (is_expression(call.args[1]) && (call.args[1].head == :->)) || is_lambda(exp)
 end
 
 function is_default_fun_defined(fun_name)
@@ -201,63 +181,72 @@ function eval_let(let_exp_args, scope)
     let_exp_init = let_exp_args[1]
     let_exp_body = let_exp_args[2:end]
     result = nothing
+    
+    inner_scope = get_let_scope(let_exp_init, scope)
 
-    if is_assignment(let_exp_init)   # if init only has 1 assignment
-        eval_let_defs(let_exp_init, scope)
-    else
-        for exp in let_exp_init.args
-            if (length(exp.args) > 1) && is_assignment(exp)   # if init is not empty
-                eval_let_defs(exp, scope)
-            end
-        end
-    end
+    update_scope(scope, inner_scope)
+
     for exp in let_exp_body
         if length(exp.args) > 1    # if body is not empty expression
-            if is_assignment(exp)
-                eval_let_defs(exp, scope)
-            else
-                result = metajulia_eval(exp, scope)
-            end
+            result = metajulia_eval(exp, scope)
         end
     end
+
     scope = remove_scope(scope)
     return result
 end
 
-function eval_let_defs(exp, scope)
-    var_name = exp.args[1]
-    var_value_exp = exp.args[2]
+function get_let_scope(let_exp_init, scope)
+    inner_scope = Dict()
 
-    if is_expression(var_name)
-        fun_def(var_name, var_value_exp, scope)   # Function Definition
+    if is_assignment(let_exp_init)   # if init only has 1 assignment
+        eval_let_defs(inner_scope, let_exp_init, scope)
     else
-        var_def(var_name, var_value_exp, scope)
+        for exp in let_exp_init.args
+            if (length(exp.args) > 1) && is_assignment(exp)   # if init is not empty
+                eval_let_defs(inner_scope, exp, scope)
+            end
+        end
     end
+    return inner_scope
+end
+
+function eval_let_defs(inner_scope, exp, scope)
+    add_scope(scope)
+    var_name = get_name(exp)
+    var = metajulia_eval(exp, scope)
+    inner_scope[var_name] = var
+    remove_scope(scope)
 end
 
 struct Fun_Def
+    inner_scope::Dict
     input_params::Any
     body::Any
 end   
 
 function Base.show(io::IO, f::Fun_Def) 
-    println(io, "<function>") 
+    print(io, "<function>") 
 end
 
 function fun_def(function_decl, function_exp, scope)
     # Extract function parameters and body
-    name = get_fun_def_name(function_decl)
-    params = get_fun_def_params(function_decl)
+    name = get_name(function_decl)
+    inner_scope = Dict()
+    params = ()
+
+    if (function_exp.head == :let)
+        inner_scope = get_let_scope(function_exp.args[1],scope)
+    else
+        inner_scope = scope[end]
+        params = get_fun_def_params(function_decl)
+    end
+
     body = get_fun_def_body(function_exp)
-    
-    fun_dev = Fun_Def(params, body)
+    fun_dev = Fun_Def(inner_scope, params, body)
     set_variable(scope, name, fun_dev) # Update scope
     return fun_dev
 end 
-
-function get_fun_def_name(function_decl)
-    return function_decl.args[1]
-end
 
 function get_fun_def_params(function_decl)
     params = function_decl.args[2:end]
@@ -278,7 +267,7 @@ function userFunction(fun_call_exp_args, scope)
     fun_name = fun_call_exp_args[1]
     param_values = map(x -> metajulia_eval(x, scope), fun_call_exp_args[2:end])
     fun_def = get_variable(scope, fun_name) 
-
+    
     if is_fdef(fun_def)   # defined function
         local_scope = Dict(zip(fun_def.input_params, param_values))
         body = fun_def.body
@@ -295,10 +284,25 @@ end
 
 function eval_fun_call(fun_call_exp_args, scope)
     add_scope(scope)
-    fun = userFunction(fun_call_exp_args, scope)
-    update_scope(scope, fun.fun_scope)   # add local scope to current env
+    fun_name = fun_call_exp_args[1]
+    def = get_variable(scope, fun_name)
+
+    if is_fdef(def) && !isempty(def.inner_scope)
+        update_scope(scope, def.inner_scope)
+    end
+
+    fun = userFunction(fun_call_exp_args, scope)    # eval given env and params
+    update_scope(scope, fun.fun_scope)
+    
     result = metajulia_eval(fun.body, scope)
-    # removed_scope = remove_scope(scope)
+    if is_lambda(result)
+        result = eval_anonymous_call(result,() ,scope)
+    end
+    if is_fdef(def)
+        new_def = Fun_Def(scope[end], def.input_params, def.body)
+        update_variable(scope,fun_name,new_def)
+    end
+    remove_scope(scope)
     return result
 end
 
@@ -308,18 +312,17 @@ function is_fun_defined(fun_name, scope)
 end
 
 function eval_global(global_exp_args, scope)
-    name = get_global_name(global_exp_args)
+    name = get_name(global_exp_args)
     result = metajulia_eval(global_exp_args, scope)
     set_global_variable(scope,name,result)    # Create or update a new variable in the global scope
     return result
 end
 
-function get_global_name(exp)
-    name = exp.args[1]
-    if is_expression(name)
-        get_global_name(name)
+function get_name(exp)
+    if is_expression(exp)
+        get_name(exp.args[1])
     else
-        return name
+        return exp
     end
 end
 
@@ -394,12 +397,20 @@ function to_tuple(var)
 end
 
 function eval_assignment(operator_exp, scope)
+    var_decl= operator_exp.args[1]
+    var_value = operator_exp.args[2]
     # if call is a function definition
-    if is_expression(operator_exp.args[1]) 
-        return fun_def(operator_exp.args[1], operator_exp.args[2], scope)
+    if is_expression(var_decl) || (is_expression(var_value) && var_value.head == :let)
+        return fun_def(var_decl, var_value, scope)
     else
-        return var_def(operator_exp.args[1], operator_exp.args[2], scope)
+        return var_def(var_decl, var_value, scope)
     end
+end
+
+function eval_lambda(operator_exp, scope)
+    var_decl= operator_exp.args[1]
+    var_value = operator_exp.args[2]
+    return Anonymous_Fun(var_decl, var_value)
 end
 
 struct fexpr
@@ -408,7 +419,7 @@ struct fexpr
 end
 
 function Base.show(io::IO, f::fexpr) 
-    println(io, "<fexpr>") 
+    print(io, "<fexpr>") 
 end
 
 function eval_fexpr_def(function_decl, scope)
@@ -533,4 +544,12 @@ function get_variable(scope, name::Symbol)
         end
     end
     return false
+end
+
+function update_variable(scope, name::Symbol, value)
+    for frame in scope
+        if haskey(frame, name)
+            frame[name] = value
+        end
+    end
 end
