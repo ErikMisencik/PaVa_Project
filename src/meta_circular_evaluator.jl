@@ -97,6 +97,10 @@ function eval_exp(exp, scope)
 end
 
 function eval_operator(operator_exp, scope)
+    if operator_exp.head == :$= 
+        # the dict defines basic operation they can be retrieved by the value 
+        return define_macro(operator_exp, scope)
+    end
     if haskey(default_sym_dict, operator_exp.head)
         # the dict defines basic operation they can be retrieved by the value
         return default_sym_dict[operator_exp.head](operator_exp, scope)
@@ -456,12 +460,12 @@ struct MacroDef
     params::Vector{Symbol}
     body::Expr
 end
+Base.show(io::IOBuffer, f::MacroDef) = print(io, "<macro>")
 
 function define_macro(exp, scope)
-    macro_name, macro_params, macro_body = string(exp.args[1].args[1]), exp.args[1].args[2:end], exp.args[2]
-    set_variable(scope, macro_name, MacroDef(macro_name, macro_params, macro_body))
+    macro_name, macro_params, macro_body = exp.args[1].args[1], exp.args[1].args[2:end], exp.args[2]
+    set_variable(scope, macro_name, MacroDef(string(macro_name), macro_params, macro_body))
 end
-
 
 function eval_macro(exp, scope)
     #add_scope(scope)
