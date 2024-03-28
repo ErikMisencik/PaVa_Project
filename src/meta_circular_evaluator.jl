@@ -221,6 +221,7 @@ function eval_let_defs(inner_scope, exp, scope)
     var = metajulia_eval(exp, scope)
     inner_scope[var_name] = var
     remove_scope(scope)
+    update_scope(scope, inner_scope)
 end
 
 struct Fun_Def
